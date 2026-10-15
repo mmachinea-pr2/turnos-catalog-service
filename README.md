@@ -2,15 +2,7 @@
 
 Mantiene una copia local de categorías, profesionales y horarios semanales del servicio de la cátedra. Ofrece búsquedas locales y proporciona las reglas de agenda al servicio de reservas.
 
-Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivamente datos ficticios.compila y funciona con MySQL.
-
-Java 25 instalado.
-Spring Boot, Maven, Docker Compose y Flyway configurados.
-Dos pruebas de integración aprobadas.
-￼Estado del servicio: {"status":"UP"}.
-Trabajé únicamente en catálogo. No hice commits, push ni PR.
-
-Los pasos para abrirlo en I
+Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivamente datos ficticios.
 
 ## Estado actual
 
