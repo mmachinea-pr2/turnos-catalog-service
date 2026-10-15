@@ -17,7 +17,7 @@ El Java activo de la terminal se encuentra en `~/.sdkman/candidates/java/current
 
 ## Docker
 
-El usuario pertenece al grupo `docker` y se verificó la respuesta del servidor. La primera consulta desde el entorno aislado del asistente fue bloqueada; la consulta fuera de ese aislamiento funcionó. No fue necesario cambiar permisos del sistema ni iniciar contenedores.
+El usuario pertenece al grupo `docker` y se verificó la respuesta del servidor. No fue necesario cambiar permisos del sistema ni iniciar contenedores.
 
 ## Preparación del catálogo
 

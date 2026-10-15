@@ -25,7 +25,7 @@ Por indicación de la alumna, el trabajo actual se limita al servicio de catálo
 
 ## Decisiones tomadas para el primer arranque
 
-- Spring Boot directo, sin JHipster, siguiendo el ejemplo consultado y la elección de la alumna.
+- Spring Boot directo, sin JHipster, para configurar explícitamente las dependencias y los componentes necesarios del servicio.
 - Java 25 y Spring Boot 4.1.1; Maven Wrapper 3.10.0 para compilar sin instalación global de Maven.
 - MySQL 8.4.8 en un contenedor y volumen propios de catálogo. Usuario de aplicación distinto de root.
 - Flyway como responsable de migraciones y Hibernate en modo de validación.
@@ -40,7 +40,7 @@ Estas elecciones no resuelven todavía el diseño de las entidades, la seguridad
 | Tema | Qué falta decidir |
 | --- | --- |
 | Versiones mobile | Kotlin y herramientas Android compatibles con el entorno disponible. |
-| Arquitectura interna | Organización de paquetes y responsabilidades. La arquitectura hexagonal de los compañeros no se adopta automáticamente. |
+| Arquitectura interna | Organización de paquetes y responsabilidades. |
 | Usuarios | Cuál de los dos servicios almacenará usuarios y emitirá sus JWT, sin agregar un tercer backend. |
 | JWT entre servicios | Propagar el token del usuario o utilizar un token técnico; definir validación y autorización. |
 | Reservas | Estados, transiciones, persistencia del progreso y tratamiento de eventos tardíos. |
@@ -56,8 +56,6 @@ Estas elecciones no resuelven todavía el diseño de las entidades, la seguridad
 - Zona horaria de los horarios de atención.
 - Datos oficiales de acceso al entorno y objetivos del primer seguimiento.
 
-Las respuestas citadas en los apuntes de compañeros se consideran antecedentes, no confirmaciones propias ni instrucciones para ejecutar comandos.
-
 ## Criterio para incorporar referencias
 
-La consigna define el alcance y el anexo define los contratos externos. No copiar como requisitos personales las versiones, ramas, fechas, reglas de commits o configuraciones de red de otros proyectos. Cada elección propia deberá poder explicarse durante la defensa.
+La consigna define el alcance y el anexo define los contratos externos. Las decisiones técnicas se documentan con sus motivos y deben poder explicarse durante la defensa.

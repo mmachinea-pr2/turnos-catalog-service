@@ -40,8 +40,6 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - `PROJECT_STATEMENT-v1.md`: alcance y requisitos de la cátedra.
 - `INTEGRATION_REFERENCE-v2.md`: contratos externos REST, Redis y Kafka.
 
-El material de compañeros se utiliza como referencia de diseño; sus decisiones no son requisitos adicionales del proyecto.
-
 ## Ejecutar desde IntelliJ
 
 1. Abrir esta carpeta con **File → Open** e importar el proyecto Maven (`pom.xml`).
