@@ -95,4 +95,4 @@ La migración `setup_probe` vive únicamente en `src/test/resources` y no se inc
 
 ## Referencia técnica
 
-La base se generó mediante [Spring Initializr](https://start.spring.io/). Las herramientas elegidas siguen el [ejemplo consultado](https://github.com/prog2-perassiferrara/backend-catalogo), con implementación propia y alcance inicial reducido.
+La base se generó mediante [Spring Initializr](https://start.spring.io/).
