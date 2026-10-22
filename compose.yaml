@@ -1,0 +1,36 @@
+name: machinea-turnos-catalog
+services:
+  mysql:
+    image: mysql:8.4.8
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:?Completar DB_NAME en .env}
+      MYSQL_USER: ${DB_USER:?Completar DB_USER en .env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Completar DB_PASSWORD en .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Completar MYSQL_ROOT_PASSWORD en .env}
+    ports:
+      - "127.0.0.1:${DB_PORT:-3308}:3306"
+    volumes:
+      - catalog_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_PASSWORD mysql -h 127.0.0.1 -u $$MYSQL_USER $$MYSQL_DATABASE -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  catalog:
+    build: .
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:?Completar DB_NAME en .env}
+      DB_USER: ${DB_USER:?Completar DB_USER en .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Completar DB_PASSWORD en .env}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8080
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+volumes:
+  catalog_mysql_data:
