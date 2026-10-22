@@ -7,12 +7,14 @@
 - [x] Definir estado inicial de sincronización y reglas transaccionales.
 - [x] Describir secuencia de implementación y verificación en PLAN.
 
-## Incorporación del código en un commit posterior
+## Implementación de persistencia
 
-- [ ] Revisar e incorporar la migración de producción.
-- [ ] Revisar e incorporar entidades y repositorios JPA.
-- [ ] Incorporar pruebas y retirar la migración exclusiva de prueba anterior.
-- [ ] Actualizar README y decisiones según la implementación incorporada.
-- [ ] Registrar el resultado de clean verify para la versión que se publicará.
+- [x] Revisar e incorporar la migración de producción.
+- [x] Revisar e incorporar entidades y repositorios JPA.
+- [x] Incorporar pruebas y retirar la migración exclusiva de prueba anterior.
+- [x] Actualizar README y decisiones según la implementación incorporada.
+- [x] Registrar el resultado de clean verify para la versión que se publicará.
 
-Existe un borrador local de código y pruebas. Las tareas pendientes indican su incorporación al incremento revisado, no la ausencia de ese borrador. La issue y el PR se registrarán cuando se publiquen; no se inventan números ni fechas de entrega.
+La implementación corresponde a la issue #3. La publicación y la revisión docente permanecen pendientes; no se cierra la issue con este commit.
+
+Verificación previa al commit: `./mvnw -B -ntp clean verify` completado el 22 de octubre de 2026. Seis pruebas aprobadas, sin errores ni omisiones, con MySQL temporal.

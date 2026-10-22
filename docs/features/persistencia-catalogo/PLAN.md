@@ -17,6 +17,6 @@ Ejecutar `./mvnw -B -ntp clean verify` con Java 25 y Docker. Verificar lectura y
 
 ## Publicación
 
-La rama de trabajo es `codex/catalogo-persistencia`. El PR se dirigirá a `main` para revisión del profesor, según el flujo actualizado. No se hace push directo a main.
+La rama de trabajo es `3-implemetar-la-persistencia-del-catalgo`. El PR se dirigirá a `main` para revisión del profesor, según el flujo actualizado. No se hace push directo a main.
 
 Esta rama parte de `1-preparacion`; antes de abrir el PR hay que comprobar si esa primera entrega ya fue integrada. Si no lo fue, el diff incluirá también su base técnica y deberá acordarse cómo revisar esa dependencia.

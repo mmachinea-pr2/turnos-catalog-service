@@ -6,13 +6,13 @@
 
 # Servicio de catálogo y sincronización
 
-Mantiene una copia local de categorías, profesionales y horarios semanales del servicio de la cátedra. Ofrece búsquedas locales y proporciona las reglas de agenda al servicio de reservas.
+Servicio destinado a mantener una copia local de categorías, profesionales y horarios semanales de la cátedra. Las búsquedas y la consulta de agenda se implementarán sobre esa copia.
 
 Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivamente datos ficticios.
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud y pruebas de integración. Las búsquedas, sincronización, usuarios y seguridad JWT todavía están pendientes.
+Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo y pruebas de integración. Las búsquedas, sincronización, usuarios y seguridad JWT todavía están pendientes.
 
 ## Alcance previsto
 
@@ -40,6 +40,8 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - [Entorno local comprobado](docs/entorno-local.md)
 - [Planificación inicial](docs/planificacion.md)
 - [Decisiones y dudas pendientes](docs/decisiones.md)
+- [Modelo de datos del catálogo](docs/modelo-datos.md)
+- [Etapa de persistencia](docs/persistencia-catalogo.md)
 
 ## Fuentes de requisitos
 
@@ -86,12 +88,12 @@ Usar una sola modalidad a la vez para evitar que dos procesos ocupen el mismo pu
 
 ```bash
 sdk env
-./mvnw -B -ntp verify
+./mvnw -B -ntp clean verify
 ```
 
 Docker debe estar funcionando. Las pruebas crean un MySQL temporal independiente, sin usar `.env` ni la base de desarrollo. Comprueban aplicación de una migración, escritura y lectura de datos y respuesta HTTP de salud sin detalles internos. Los informes quedan en `target/surefire-reports`.
 
-La migración `setup_probe` vive únicamente en `src/test/resources` y no se incluye en el JAR. Las tablas de negocio se definirán en la siguiente etapa; Flyway administrará sus migraciones y Hibernate solo validará el esquema (`ddl-auto=validate`).
+La migración de producción `V1__create_catalog.sql` crea categorías, profesionales, horarios y estado de sincronización. Reemplaza la antigua tabla exclusiva de pruebas `setup_probe`. Flyway administra el esquema y Hibernate lo valida (`ddl-auto=validate`). Las pruebas verifican también referencias, restricciones de horarios y rollback conjunto de datos y versión. Una vez aplicada una migración de producción, los cambios futuros requieren una nueva versión; no se modifica la anterior.
 
 ## Configuración local
 

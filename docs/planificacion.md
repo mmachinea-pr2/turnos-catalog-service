@@ -47,4 +47,4 @@ La consigna prevé reuniones quincenales y entrega final en los últimos días d
 
 ## Próximo paso
 
-La base técnica de catálogo está implementada con Java 25, Spring Boot, Maven, MySQL y Flyway. El primer arranque desde la terminal de IntelliJ fue confirmado por la alumna. Organizar la [primera entrega](primera-entrega.md) mediante milestone, issue y posterior PR antes de continuar con funcionalidades de negocio.
+La base técnica está preparada y la persistencia del catálogo se desarrolla como [etapa separada](persistencia-catalogo.md). Las entregas se presentan mediante PR hacia main para revisión docente. El siguiente incremento funcional será aplicar un snapshot completo de forma transaccional; no se inicia frontend.

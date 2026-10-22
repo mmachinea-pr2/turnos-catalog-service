@@ -21,7 +21,7 @@ Los tres repositorios fueron creados por la alumna. La planificación general y 
 
 ## Flujo de entrega acordado
 
-Por indicación de la alumna, el trabajo actual se limita al servicio de catálogo. Los cambios permanecen locales, sin commits, push ni PR automáticos. La alumna confirmó que todos los PR deben apuntar a `dev`, donde el profesor acepta o rechaza la entrega. Se propone una rama de trabajo por issue; el milestone agrupa issues y no necesita rama propia. No se enviarán PR a `main` ni se integrarán cambios allí antes de la revisión del profesor. La publicación sigue pendiente de indicación de la alumna.
+El trabajo actual se limita al catálogo. El flujo actualizado es rama de trabajo → PR hacia `main` → revisión y aceptación del profesor. No se hace push directo a `main`. Cada issue puede tener su rama; el milestone agrupa issues. Los commits y la publicación quedan a cargo de la alumna salvo indicación expresa.
 
 ## Decisiones tomadas para el primer arranque
 
@@ -59,3 +59,7 @@ Estas elecciones no resuelven todavía el diseño de las entidades, la seguridad
 ## Criterio para incorporar referencias
 
 La consigna define el alcance y el anexo define los contratos externos. Las decisiones técnicas se documentan con sus motivos y deben poder explicarse durante la defensa.
+
+## Persistencia del catálogo
+
+Se implementa una primera migración de producción con categorías, profesionales, horarios y una fila de estado de sincronización. Se conservan IDs externos y bajas lógicas. Las referencias se protegen con claves foráneas, los instantes se guardan en UTC y los horarios como hora local. La versión inicial es NULL hasta aplicar una copia completa. Los repositorios JPA permanecen en infraestructura y no se exponen por HTTP. Ver [modelo de datos](modelo-datos.md) para reglas, pruebas y límites.
