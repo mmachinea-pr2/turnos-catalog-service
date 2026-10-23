@@ -102,7 +102,7 @@ La migración de producción `V1__create_catalog.sql` crea categorías, profesio
 - `target/site/jacoco/index.html`: abrir en un navegador para consultar clases y líneas ejecutadas.
 - `target/site/jacoco/jacoco.xml`: datos para herramientas de análisis como Sonar.
 
-Docker debe estar funcionando para las pruebas de integración. Los reportes se generan localmente y no se suben al repositorio. No se definieron exclusiones propias ni un mínimo obligatorio de cobertura. GitHub Actions y la publicación en Sonar son pasos posteriores.
+Docker debe estar funcionando para las pruebas de integración. Los reportes se generan localmente y no se suben al repositorio. No se definieron exclusiones propias ni un mínimo obligatorio de cobertura. El workflow de GitHub Actions genera este XML antes de enviarlo a Sonar. La activación requiere configurar la cuenta según la [guía de CI y Sonar](docs/sonar-ci.md).
 
 Ver [especificación de cobertura](docs/features/cobertura/SPEC.md).
 

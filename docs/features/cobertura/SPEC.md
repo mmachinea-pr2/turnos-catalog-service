@@ -14,4 +14,4 @@ Medir las líneas y ramas ejecutadas por las pruebas del backend para detectar p
 
 ## Límites
 
-Esta etapa mide cobertura, no configura GitHub Actions ni publica resultados en Sonar. No fija un porcentaje mínimo no acordado. Un porcentaje alto no demuestra cumplimiento funcional ni ausencia de errores.
+Se amplía la etapa con un workflow de GitHub Actions que ejecuta verify y publica el informe mediante SonarScanner Maven. La activación remota depende de configurar el token, la clave de organización y desactivar Automatic Analysis. No fija un porcentaje mínimo no acordado. Un porcentaje alto no demuestra cumplimiento funcional ni ausencia de errores.
