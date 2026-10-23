@@ -63,3 +63,7 @@ La consigna define el alcance y el anexo define los contratos externos. Las deci
 ## Persistencia del catálogo
 
 Se implementa una primera migración de producción con categorías, profesionales, horarios y una fila de estado de sincronización. Se conservan IDs externos y bajas lógicas. Las referencias se protegen con claves foráneas, los instantes se guardan en UTC y los horarios como hora local. La versión inicial es NULL hasta aplicar una copia completa. Los repositorios JPA permanecen en infraestructura y no se exponen por HTTP. Ver [modelo de datos](modelo-datos.md) para reglas, pruebas y límites.
+
+## Modelos de dominio
+
+Categorías, profesionales y horarios se representan con records inmutables en `catalog.domain.model`. Se usan únicamente tipos del JDK y reglas equivalentes al esquema existente. Un mapper explícito en infraestructura traduce entre modelos y entidades JPA; el dominio no conoce JPA. Esta separación prepara la futura aplicación de snapshots sin adelantar clientes externos ni endpoints.
