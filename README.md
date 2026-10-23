@@ -96,6 +96,17 @@ Docker debe estar funcionando. Las pruebas crean un MySQL temporal independiente
 
 La migración de producción `V1__create_catalog.sql` crea categorías, profesionales, horarios y estado de sincronización. Reemplaza la antigua tabla exclusiva de pruebas `setup_probe`. Flyway administra el esquema y Hibernate lo valida (`ddl-auto=validate`). Las pruebas verifican también referencias, restricciones de horarios y rollback conjunto de datos y versión. Una vez aplicada una migración de producción, los cambios futuros requieren una nueva versión; no se modifica la anterior.
 
+## Cobertura de pruebas
+
+`./mvnw -B -ntp clean verify` ejecuta las pruebas y genera la medición con JaCoCo 0.8.15:
+
+- `target/site/jacoco/index.html`: abrir en un navegador para consultar clases y líneas ejecutadas.
+- `target/site/jacoco/jacoco.xml`: datos para herramientas de análisis como Sonar.
+
+Docker debe estar funcionando para las pruebas de integración. Los reportes se generan localmente y no se suben al repositorio. No se definieron exclusiones propias ni un mínimo obligatorio de cobertura. El workflow de GitHub Actions genera este XML antes de enviarlo a Sonar. La activación requiere configurar la cuenta según la [guía de CI y Sonar](docs/sonar-ci.md).
+
+Ver [especificación de cobertura](docs/features/cobertura/SPEC.md).
+
 ## Configuración local
 
 `.env` contiene claves de desarrollo y está excluido de Git y de la imagen Docker. `.env.example` documenta los campos sin secretos. No hay credenciales reales de cátedra ni integración externa en esta etapa.
