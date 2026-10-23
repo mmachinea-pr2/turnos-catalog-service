@@ -61,7 +61,7 @@ erDiagram
 
 ## Organización
 
-Las clases Entity y los repositorios Spring Data JPA se ubicarán en `catalog.infrastructure.persistence`. Son componentes internos de persistencia, no respuestas REST. Los DTO y los casos de uso se incorporarán cuando se implementen los contratos y la sincronización.
+Las clases Entity y los repositorios Spring Data JPA se ubicarán en `catalog.infrastructure.persistence`. Son componentes internos de persistencia, no respuestas REST. Los modelos inmutables se ubican en `catalog.domain.model` y se convierten con `CatalogPersistenceMapper`, dentro de infraestructura. Los DTO y los casos de uso se incorporarán cuando se implementen los contratos y la sincronización.
 
 ## Migraciones previstas
 

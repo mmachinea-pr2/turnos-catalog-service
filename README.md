@@ -12,7 +12,7 @@ Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivam
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo y pruebas de integración. Las búsquedas, sincronización, usuarios y seguridad JWT todavía están pendientes.
+Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Las búsquedas, sincronización, usuarios y seguridad JWT todavía están pendientes.
 
 ## Alcance previsto
 
@@ -42,6 +42,7 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - [Decisiones y dudas pendientes](docs/decisiones.md)
 - [Modelo de datos del catálogo](docs/modelo-datos.md)
 - [Etapa de persistencia](docs/persistencia-catalogo.md)
+- [Dominio del catálogo](docs/features/dominio-catalogo/SPEC.md)
 
 ## Fuentes de requisitos
 
