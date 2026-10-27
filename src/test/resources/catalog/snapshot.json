@@ -1,0 +1,39 @@
+{
+  "snapshotVersion": 7,
+  "generatedAt": "2026-09-10T13:40:00Z",
+  "extra": "compatible",
+  "professionalCategories": [
+    {
+      "id": 1,
+      "name": "Clínica",
+      "description": null,
+      "enabled": false,
+      "createdAt": "2026-09-10T13:40:00Z",
+      "updatedAt": "2026-09-10T13:40:00Z"
+    }
+  ],
+  "professionals": [
+    {
+      "id": 15,
+      "categoryId": 1,
+      "firstName": "Ana",
+      "lastName": "Gómez",
+      "enabled": false,
+      "createdAt": "2026-09-10T13:40:00Z",
+      "updatedAt": "2026-09-10T13:40:00Z"
+    }
+  ],
+  "weeklySchedules": [
+    {
+      "id": 21,
+      "professionalId": 15,
+      "dayOfWeek": "MONDAY",
+      "startTime": "09:00",
+      "endTime": "12:00:00",
+      "slotDurationMinutes": 30,
+      "enabled": false,
+      "createdAt": "2026-09-10T13:40:00Z",
+      "updatedAt": "2026-09-10T13:40:00Z"
+    }
+  ]
+}
