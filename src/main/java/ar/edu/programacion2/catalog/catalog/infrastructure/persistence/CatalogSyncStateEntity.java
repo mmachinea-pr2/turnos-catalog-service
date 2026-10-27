@@ -17,7 +17,7 @@ public class CatalogSyncStateEntity {
     public Long getAppliedVersion() { return appliedVersion; }
     public Instant getAppliedAt() { return appliedAt; }
 
-    // La futura sincronización debe invocarlo en la misma transacción que los datos.
+    // La sincronización debe invocarlo en la misma transacción que los datos.
     public void markApplied(long version, Instant appliedAt) {
         if (version < 0 || appliedAt == null) {
             throw new IllegalArgumentException("Version and application time are required");
