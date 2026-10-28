@@ -3,6 +3,17 @@ package ar.edu.programacion2.catalog;
 import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogSnapshotStore;
 import ar.edu.programacion2.catalog.catalog.domain.model.*;
 import ar.edu.programacion2.catalog.catalog.infrastructure.persistence.*;
+import ar.edu.programacion2.catalog.catalog.application.service.SynchronizeCatalogSnapshotService;
+import ar.edu.programacion2.catalog.catalog.application.port.out.SnapshotFetchException;
+import ar.edu.programacion2.catalog.catalog.infrastructure.rest.RestCatalogSnapshotSource;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -105,7 +116,8 @@ class CatalogSnapshotPersistenceTests {
         var invalid = new CatalogSnapshot(2, SOURCE_TIME, List.of(category("Nueva")),
             List.of(invalidProfessional), List.of());
         // Supera el límite TEXT de MySQL después de borrar la copia anterior.
-        assertThatThrownBy(() -> store.apply(invalid)).isInstanceOf(DataAccessException.class);
+        var useCase = new SynchronizeCatalogSnapshotService(() -> invalid, store);
+        assertThatThrownBy(useCase::synchronize).isInstanceOf(DataAccessException.class);
         assertThat(categories.findById(101L).orElseThrow().getName()).isEqualTo("Original");
         assertThat(professionals.findById(201L).orElseThrow().getFirstName()).isEqualTo("Ana");
         assertThat(schedules.findById(301L)).isPresent();
@@ -121,6 +133,45 @@ class CatalogSnapshotPersistenceTests {
         assertThatThrownBy(() -> store.apply(snapshot(2, "Nueva")))
             .isInstanceOf(DataAccessException.class).hasRootCauseInstanceOf(IllegalStateException.class);
         assertThat(categories.findById(101L).orElseThrow().getName()).isEqualTo("Original");
+    }
+
+    @Test
+    void synchronizationFetchesOutsideTransactionThenPersistsAndIgnoresDuplicate() {
+        var builder = RestClient.builder().baseUrl("http://catedra.test");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        for (int i = 0; i < 2; i++) {
+            server.expect(requestTo("http://catedra.test/api/synchronization/snapshot"))
+                .andExpect(request -> assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse())
+                .andRespond(withSuccess(new ClassPathResource("catalog/snapshot.json"), MediaType.APPLICATION_JSON));
+        }
+        var useCase = new SynchronizeCatalogSnapshotService(new RestCatalogSnapshotSource(builder.build()), store);
+        assertThat(useCase.synchronize()).isTrue();
+        var appliedAt = states.findById(1).orElseThrow().getAppliedAt();
+        assertThat(states.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(7);
+        assertThat(categories.findById(1L)).isPresent();
+        assertThat(professionals.findById(15L)).isPresent();
+        assertThat(schedules.findById(21L)).isPresent();
+        assertThat(useCase.synchronize()).isFalse();
+        assertThat(states.findById(1).orElseThrow().getAppliedAt()).isEqualTo(appliedAt);
+        server.verify();
+    }
+
+    @Test
+    void remoteFailureKeepsPreviouslyAppliedCatalog() {
+        store.apply(snapshot(1, "Original"));
+        var appliedAt = states.findById(1).orElseThrow().getAppliedAt();
+        var builder = RestClient.builder().baseUrl("http://catedra.test");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("http://catedra.test/api/synchronization/snapshot"))
+            .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        var useCase = new SynchronizeCatalogSnapshotService(new RestCatalogSnapshotSource(builder.build()), store);
+        assertThatThrownBy(useCase::synchronize).isInstanceOf(SnapshotFetchException.class);
+        assertThat(categories.findById(101L).orElseThrow().getName()).isEqualTo("Original");
+        assertThat(professionals.findById(201L)).isPresent();
+        assertThat(schedules.findById(301L)).isPresent();
+        assertThat(states.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(1);
+        assertThat(states.findById(1).orElseThrow().getAppliedAt()).isEqualTo(appliedAt);
+        server.verify();
     }
 
     private static ProfessionalCategory category(String name) {
