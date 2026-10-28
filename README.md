@@ -12,7 +12,7 @@ Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivam
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Las búsquedas, la obtención externa y sincronización automática del catálogo, usuarios y seguridad JWT todavía están pendientes.
+Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Se incorpora un cliente REST opcional para obtener y validar el snapshot de la cátedra; todavía no está conectado al guardado. Las búsquedas, la sincronización automática del catálogo, usuarios y seguridad JWT todavía están pendientes.
 
 ## Alcance previsto
 
@@ -45,6 +45,7 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - [Dominio del catálogo](docs/features/dominio-catalogo/SPEC.md)
 - [Validación del snapshot](docs/features/validar-snapshot/SPEC.md)
 - [Persistencia atómica del snapshot](docs/features/aplicar-snapshot/SPEC.md)
+- [Consulta REST del snapshot](docs/features/consultar-snapshot/SPEC.md)
 
 ## Fuentes de requisitos
 
@@ -111,7 +112,7 @@ Ver [especificación de cobertura](docs/features/cobertura/SPEC.md).
 
 ## Configuración local
 
-`.env` contiene claves de desarrollo y está excluido de Git y de la imagen Docker. `.env.example` documenta los campos sin secretos. No hay credenciales reales de cátedra ni integración externa en esta etapa.
+`.env` contiene claves de desarrollo y está excluido de Git y de la imagen Docker. `.env.example` documenta los campos sin secretos. Las credenciales técnicas de cátedra se configuran únicamente en el entorno local; los archivos versionados contienen campos vacíos. El cliente REST está desactivado por defecto.
 
 ## Referencia técnica
 
