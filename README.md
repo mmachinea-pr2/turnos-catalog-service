@@ -6,13 +6,13 @@
 
 # Servicio de catálogo y sincronización
 
-Servicio destinado a mantener una copia local de categorías, profesionales y horarios semanales de la cátedra. Las búsquedas y la consulta de agenda se implementarán sobre esa copia.
+Servicio destinado a mantener una copia local de categorías, profesionales y horarios semanales de la cátedra. Las consultas se realizan sobre esa copia local.
 
 Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivamente datos ficticios.
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Todavía no se ejecuta automáticamente ni existe un endpoint para invocarlo. Las búsquedas, la sincronización automática del catálogo, usuarios y seguridad JWT todavía están pendientes.
+Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Puede ejecutarse de forma explícita en modo no web; el arranque normal no sincroniza. Está disponible el listado de categorías habilitadas en `GET /api/catalog/categories`. Las búsquedas de profesionales, la consulta de agenda, la sincronización automática del catálogo, usuarios y seguridad JWT todavía están pendientes.
 
 ## Alcance previsto
 
@@ -47,6 +47,8 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - [Persistencia atómica del snapshot](docs/features/aplicar-snapshot/SPEC.md)
 - [Consulta REST del snapshot](docs/features/consultar-snapshot/SPEC.md)
 - [Caso de uso de sincronización](docs/features/sincronizar-snapshot/SPEC.md)
+- [Ejecutar una carga manual del catálogo](docs/features/carga-manual/SPEC.md)
+- [Consultar categorías habilitadas](docs/features/listar-categorias/SPEC.md)
 
 ## Fuentes de requisitos
 
