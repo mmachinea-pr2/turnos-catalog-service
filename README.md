@@ -12,7 +12,7 @@ Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivam
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Se incorpora un cliente REST opcional para obtener y validar el snapshot de la cátedra; todavía no está conectado al guardado. Las búsquedas, la sincronización automática del catálogo, usuarios y seguridad JWT todavía están pendientes.
+Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Todavía no se ejecuta automáticamente ni existe un endpoint para invocarlo. Las búsquedas, la sincronización automática del catálogo, usuarios y seguridad JWT todavía están pendientes.
 
 ## Alcance previsto
 
@@ -46,6 +46,7 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - [Validación del snapshot](docs/features/validar-snapshot/SPEC.md)
 - [Persistencia atómica del snapshot](docs/features/aplicar-snapshot/SPEC.md)
 - [Consulta REST del snapshot](docs/features/consultar-snapshot/SPEC.md)
+- [Caso de uso de sincronización](docs/features/sincronizar-snapshot/SPEC.md)
 
 ## Fuentes de requisitos
 
