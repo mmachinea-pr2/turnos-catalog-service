@@ -135,6 +135,27 @@ class CatalogApplicationTests {
     }
 
     @Test
+    @Transactional
+    void eveningScheduleKeepsLocalHoursInArgentinaTimezone() {
+        var previous = java.util.TimeZone.getDefault();
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/Argentina/Mendoza"));
+        try {
+            categories.saveAndFlush(new ProfessionalCategoryEntity(104L, "Tarde", null, true, CREATED, CREATED));
+            professionals.saveAndFlush(new ProfessionalEntity(204L, 104L, "Ana", "Gómez", true, CREATED, CREATED));
+            schedules.saveAndFlush(new WeeklyScheduleEntity(304L, 204L, DayOfWeek.MONDAY,
+                LocalTime.of(19, 0), LocalTime.of(22, 0), 30, true, CREATED, CREATED));
+            assertThat(jdbc.queryForObject("SELECT CAST(start_time AS CHAR) FROM weekly_schedule WHERE id=304", String.class))
+                .startsWith("19:00:00");
+            assertThat(jdbc.queryForObject("SELECT CAST(end_time AS CHAR) FROM weekly_schedule WHERE id=304", String.class))
+                .startsWith("22:00:00");
+            entityManager.clear();
+            assertThat(schedules.findById(304L).orElseThrow().getEndTime()).isEqualTo(LocalTime.of(22, 0));
+        } finally {
+            java.util.TimeZone.setDefault(previous);
+        }
+    }
+
+    @Test
     void healthReportsUpWithoutInternalDetails() throws Exception {
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/actuator/health")).build(),
