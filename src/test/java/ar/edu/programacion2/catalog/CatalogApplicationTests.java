@@ -135,6 +135,70 @@ class CatalogApplicationTests {
     }
 
     @Test
+    @Transactional
+    void eveningScheduleKeepsLocalHoursInArgentinaTimezone() {
+        var previous = java.util.TimeZone.getDefault();
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/Argentina/Mendoza"));
+        try {
+            categories.saveAndFlush(new ProfessionalCategoryEntity(104L, "Tarde", null, true, CREATED, CREATED));
+            professionals.saveAndFlush(new ProfessionalEntity(204L, 104L, "Ana", "Gómez", true, CREATED, CREATED));
+            schedules.saveAndFlush(new WeeklyScheduleEntity(304L, 204L, DayOfWeek.MONDAY,
+                LocalTime.of(19, 0), LocalTime.of(22, 0), 30, true, CREATED, CREATED));
+            assertThat(jdbc.queryForObject("SELECT CAST(start_time AS CHAR) FROM weekly_schedule WHERE id=304", String.class))
+                .startsWith("19:00:00");
+            assertThat(jdbc.queryForObject("SELECT CAST(end_time AS CHAR) FROM weekly_schedule WHERE id=304", String.class))
+                .startsWith("22:00:00");
+            entityManager.clear();
+            assertThat(schedules.findById(304L).orElseThrow().getEndTime()).isEqualTo(LocalTime.of(22, 0));
+        } finally {
+            java.util.TimeZone.setDefault(previous);
+        }
+    }
+
+    @Test
+    void categoryEndpointReturnsOnlyEnabledCategoriesWithStableOrderAndPublicFields() throws Exception {
+        try {
+            categories.saveAllAndFlush(java.util.List.of(
+                new ProfessionalCategoryEntity(501L, "Zoología", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(502L, "Clínica", "General", true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(503L, "Clínica", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(504L, "Archivada", null, false, CREATED, CREATED)));
+            var response = getCategories();
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/json");
+            var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+            assertThat(mapper.readTree(response.body())).isEqualTo(mapper.readTree("""
+                [{"id":502,"name":"Clínica","description":"General"},
+                 {"id":503,"name":"Clínica","description":null},
+                 {"id":501,"name":"Zoología","description":null}]
+                """));
+            assertThat(categories.count()).isEqualTo(4);
+        } finally {
+            categories.deleteAllByIdInBatch(java.util.List.of(501L, 502L, 503L, 504L));
+        }
+    }
+
+    @Test
+    void categoryEndpointReturnsEmptyArrayWithoutEnabledCategories() throws Exception {
+        assertThat(getCategories().body()).isEqualTo("[]");
+        try {
+            categories.saveAndFlush(new ProfessionalCategoryEntity(505L, "Archivada", null, false, CREATED, CREATED));
+            var response = getCategories();
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.body()).isEqualTo("[]");
+        } finally {
+            categories.deleteById(505L);
+        }
+    }
+
+    private HttpResponse<String> getCategories() throws Exception {
+        try (var client = HttpClient.newHttpClient()) {
+            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/categories")).build(),
+                HttpResponse.BodyHandlers.ofString());
+        }
+    }
+
+    @Test
     void healthReportsUpWithoutInternalDetails() throws Exception {
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/actuator/health")).build(),

@@ -1,6 +1,8 @@
 package ar.edu.programacion2.catalog.catalog.infrastructure.persistence;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -19,9 +21,11 @@ public class WeeklyScheduleEntity {
     private DayOfWeek dayOfWeek;
 
     @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.LOCAL_TIME)
     private LocalTime startTime;
 
     @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.LOCAL_TIME)
     private LocalTime endTime;
 
     @Column(nullable = false)
