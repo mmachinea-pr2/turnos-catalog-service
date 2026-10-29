@@ -199,6 +199,67 @@ class CatalogApplicationTests {
     }
 
     @Test
+    void professionalsEndpointFiltersCategoryAndLogicalDeletionsWithStableOrder() throws Exception {
+        try {
+            categories.saveAllAndFlush(java.util.List.of(
+                new ProfessionalCategoryEntity(601L, "Clínica", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(602L, "Otra", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(603L, "Deshabilitada", null, false, CREATED, CREATED)));
+            professionals.saveAllAndFlush(java.util.List.of(
+                new ProfessionalEntity(701L, 601L, "Zoe", "Zapata", true, CREATED, CREATED),
+                new ProfessionalEntity(702L, 601L, "Bruno", "Gómez", true, CREATED, CREATED),
+                new ProfessionalEntity(703L, 601L, "Ana", "Gómez", true, CREATED, CREATED),
+                new ProfessionalEntity(704L, 601L, "Ana", "Gómez", true, CREATED, CREATED),
+                new ProfessionalEntity(705L, 601L, "Oculto", "A", false, CREATED, CREATED),
+                new ProfessionalEntity(706L, 602L, "Otra", "Categoría", true, CREATED, CREATED),
+                new ProfessionalEntity(707L, 603L, "No", "Visible", true, CREATED, CREATED)));
+            var response = getProfessionals("?categoryId=601");
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/json");
+            var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+            assertThat(mapper.readTree(response.body())).isEqualTo(mapper.readTree("""
+                [{"id":703,"categoryId":601,"firstName":"Ana","lastName":"Gómez"},
+                 {"id":704,"categoryId":601,"firstName":"Ana","lastName":"Gómez"},
+                 {"id":702,"categoryId":601,"firstName":"Bruno","lastName":"Gómez"},
+                 {"id":701,"categoryId":601,"firstName":"Zoe","lastName":"Zapata"}]
+                """));
+            assertThat(getProfessionals("?categoryId=603").body()).isEqualTo("[]");
+            assertThat(professionals.count()).isEqualTo(7);
+        } finally {
+            professionals.deleteAllByIdInBatch(java.util.List.of(701L, 702L, 703L, 704L, 705L, 706L, 707L));
+            categories.deleteAllByIdInBatch(java.util.List.of(601L, 602L, 603L));
+        }
+    }
+
+    @Test
+    void professionalsEndpointReturnsEmptyForMissingOrEmptyCategory() throws Exception {
+        var missing = getProfessionals("?categoryId=699");
+        assertThat(missing.statusCode()).isEqualTo(200);
+        assertThat(missing.body()).isEqualTo("[]");
+        try {
+            categories.saveAndFlush(new ProfessionalCategoryEntity(604L, "Vacía", null, true, CREATED, CREATED));
+            var response = getProfessionals("?categoryId=604");
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.body()).isEqualTo("[]");
+        } finally {
+            categories.deleteById(604L);
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"", "?categoryId=0", "?categoryId=-1", "?categoryId=abc", "?categoryId=9223372036854775808"})
+    void professionalsEndpointRejectsInvalidCategory(String query) throws Exception {
+        assertThat(getProfessionals(query).statusCode()).isEqualTo(400);
+    }
+
+    private HttpResponse<String> getProfessionals(String query) throws Exception {
+        try (var client = HttpClient.newHttpClient()) {
+            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/professionals" + query)).build(),
+                HttpResponse.BodyHandlers.ofString());
+        }
+    }
+
+    @Test
     void healthReportsUpWithoutInternalDetails() throws Exception {
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/actuator/health")).build(),
