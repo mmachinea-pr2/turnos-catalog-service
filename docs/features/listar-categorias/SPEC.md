@@ -14,7 +14,7 @@ Ejemplo ficticio:
 ]
 ```
 
-Si la base está vacía o no hay categorías habilitadas, devuelve `[]`. Esta respuesta no distingue un catálogo sin sincronizar de un catálogo vacío; el estado de sincronización tendrá una consulta separada. No hay paginación ni filtros en este primer listado de categorías.
+Si la base está vacía o no hay categorías habilitadas, devuelve `[]`. Esta respuesta no distingue un catálogo sin sincronizar de un catálogo vacío; el [estado de sincronización](../estado-sincronizacion/SPEC.md) se consulta por separado. No hay paginación ni filtros en este primer listado de categorías.
 
 ## Arquitectura
 

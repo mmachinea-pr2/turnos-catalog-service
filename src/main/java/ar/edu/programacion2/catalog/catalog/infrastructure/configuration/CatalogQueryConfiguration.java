@@ -9,11 +9,19 @@ import ar.edu.programacion2.catalog.catalog.application.service.ListProfessional
 import ar.edu.programacion2.catalog.catalog.application.port.in.ListProfessionalSchedules;
 import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogScheduleReader;
 import ar.edu.programacion2.catalog.catalog.application.service.ListProfessionalSchedulesService;
+import ar.edu.programacion2.catalog.catalog.application.port.in.GetCatalogSynchronizationStatus;
+import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogSynchronizationStatusReader;
+import ar.edu.programacion2.catalog.catalog.application.service.GetCatalogSynchronizationStatusService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(proxyBeanMethods = false)
 public class CatalogQueryConfiguration {
+    @Bean
+    GetCatalogSynchronizationStatus getCatalogSynchronizationStatus(CatalogSynchronizationStatusReader reader) {
+        return new GetCatalogSynchronizationStatusService(reader);
+    }
+
     @Bean
     ListProfessionalSchedules listProfessionalSchedules(CatalogScheduleReader reader) {
         return new ListProfessionalSchedulesService(reader);

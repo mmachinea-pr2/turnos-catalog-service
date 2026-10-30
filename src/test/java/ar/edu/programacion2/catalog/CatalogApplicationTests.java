@@ -423,6 +423,60 @@ class CatalogApplicationTests {
     }
 
     @Test
+    void synchronizationStatusReportsNotInitializedWithoutTriggeringLoad() throws Exception {
+        var response = getSynchronizationStatus();
+        assertThat(response.statusCode()).isEqualTo(200);
+        var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+        assertThat(mapper.readTree(response.body())).isEqualTo(mapper.readTree("""
+            {"initialized":false,"appliedVersion":null,"appliedAt":null}
+            """));
+        assertThat(categories.count()).isZero();
+        assertThat(syncStates.findById(1).orElseThrow().getAppliedVersion()).isNull();
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(longs = {0, 7})
+    void synchronizationStatusReportsCommittedVersionAndUtcTime(long version) throws Exception {
+        try {
+            var transaction = new TransactionTemplate(transactionManager);
+            transaction.executeWithoutResult(status -> {
+                var state = syncStates.findForUpdate().orElseThrow();
+                state.markApplied(version, CREATED);
+                syncStates.flush();
+            });
+            var response = getSynchronizationStatus();
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/json");
+            var body = tools.jackson.databind.json.JsonMapper.builder().build().readTree(response.body());
+            assertThat(body.size()).isEqualTo(3);
+            assertThat(body.path("initialized").asBoolean()).isTrue();
+            assertThat(body.path("appliedVersion").asLong()).isEqualTo(version);
+            assertThat(Instant.parse(body.path("appliedAt").asText())).isEqualTo(CREATED);
+            assertThat(body.path("appliedAt").asText()).endsWith("Z");
+            assertThat(syncStates.findById(1).orElseThrow().getAppliedAt()).isEqualTo(CREATED);
+        } finally {
+            jdbc.update("UPDATE catalog_sync_state SET applied_version=NULL, applied_at=NULL WHERE id=1");
+        }
+    }
+
+    @Test
+    void missingSynchronizationStateIsAnErrorRatherThanUninitialized() throws Exception {
+        jdbc.update("DELETE FROM catalog_sync_state WHERE id=1");
+        try {
+            assertThat(getSynchronizationStatus().statusCode()).isEqualTo(500);
+        } finally {
+            jdbc.update("INSERT INTO catalog_sync_state(id, applied_version, applied_at) VALUES (1, NULL, NULL)");
+        }
+    }
+
+    private HttpResponse<String> getSynchronizationStatus() throws Exception {
+        try (var client = HttpClient.newHttpClient()) {
+            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/synchronization/status")).build(),
+                HttpResponse.BodyHandlers.ofString());
+        }
+    }
+
+    @Test
     void healthReportsUpWithoutInternalDetails() throws Exception {
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/actuator/health")).build(),
