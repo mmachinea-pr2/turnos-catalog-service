@@ -12,7 +12,7 @@ Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivam
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Puede ejecutarse de forma explícita en modo no web; el arranque normal no sincroniza. Están disponibles las categorías habilitadas en `GET /api/catalog/categories` y los profesionales por categoría en `GET /api/catalog/professionals?categoryId=1`. El listado de profesionales admite búsqueda por nombre con el parámetro opcional `name`. La consulta de agenda, sincronización automática, usuarios y seguridad JWT todavía están pendientes.
+Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Puede ejecutarse de forma explícita en modo no web; el arranque normal no sincroniza. Están disponibles las categorías habilitadas en `GET /api/catalog/categories` y los profesionales por categoría en `GET /api/catalog/professionals?categoryId=1`. El listado de profesionales admite búsqueda por nombre con el parámetro opcional `name`. La agenda semanal se consulta en `GET /api/catalog/professionals/{professionalId}/schedules`. El cálculo de disponibilidad, la sincronización automática, usuarios y seguridad JWT todavía están pendientes.
 
 ## Alcance previsto
 
@@ -51,6 +51,7 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - [Consultar categorías habilitadas](docs/features/listar-categorias/SPEC.md)
 - [Consultar profesionales por categoría](docs/features/profesionales-categoria/SPEC.md)
 - [Buscar profesionales por nombre](docs/features/buscar-profesionales/SPEC.md)
+- [Consultar horarios semanales](docs/features/horarios-profesional/SPEC.md)
 
 ## Fuentes de requisitos
 
