@@ -370,6 +370,59 @@ class CatalogApplicationTests {
     }
 
     @Test
+    void professionalsPaginationPreservesFiltersCountsAndStableOrder() throws Exception {
+        var ids = new java.util.ArrayList<Long>();
+        var entities = new java.util.ArrayList<ProfessionalEntity>();
+        try {
+            categories.saveAllAndFlush(java.util.List.of(
+                new ProfessionalCategoryEntity(2001L, "Paginada", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(2002L, "Otra", null, true, CREATED, CREATED)));
+            for (int i = 0; i < 24; i++) {
+                long id = 2101L + i;
+                ids.add(id);
+                entities.add(new ProfessionalEntity(id, 2001L, "Nombre", "Apellido", true, CREATED, CREATED));
+            }
+            ids.addAll(java.util.List.of(2201L, 2202L, 2203L));
+            entities.add(new ProfessionalEntity(2201L, 2001L, "Bruno", "Otro", true, CREATED, CREATED));
+            entities.add(new ProfessionalEntity(2202L, 2001L, "Nombre", "Apellido", false, CREATED, CREATED));
+            entities.add(new ProfessionalEntity(2203L, 2002L, "Nombre", "Apellido", true, CREATED, CREATED));
+            professionals.saveAllAndFlush(entities);
+            var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+            var defaults = getProfessionals("?categoryId=2001");
+            assertThat(defaults.statusCode()).isEqualTo(200);
+            assertThat(mapper.readTree(defaults.body()).size()).isEqualTo(20);
+            assertThat(defaults.headers().firstValue("X-Total-Count")).contains("25");
+            var actualIds = new java.util.ArrayList<Long>();
+            for (int page = 0; page < 4; page++) {
+                var response = getProfessionals("?categoryId=2001&name=nombre&size=10&page=" + page);
+                assertThat(response.statusCode()).isEqualTo(200);
+                assertThat(response.headers().firstValue("X-Total-Count")).contains("24");
+                var rows = mapper.readTree(response.body());
+                assertThat(rows.size()).isEqualTo(page < 2 ? 10 : page == 2 ? 4 : 0);
+                for (var row : rows) actualIds.add(row.path("id").asLong());
+            }
+            assertThat(actualIds).containsExactlyElementsOf(ids.subList(0, 24));
+            var noMatches = getProfessionals("?categoryId=2001&name=inexistente");
+            assertThat(noMatches.body()).isEqualTo("[]");
+            assertThat(noMatches.headers().firstValue("X-Total-Count")).contains("0");
+            var maxSize = getProfessionals("?categoryId=2001&size=100");
+            assertThat(maxSize.statusCode()).isEqualTo(200);
+            assertThat(mapper.readTree(maxSize.body()).size()).isEqualTo(25);
+        } finally {
+            professionals.deleteAllByIdInBatch(ids);
+            categories.deleteAllByIdInBatch(java.util.List.of(2001L, 2002L));
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {
+        "page=-1", "size=0", "size=-1", "size=101", "page=abc", "size=abc",
+        "page=2147483648", "size=2147483648", "page=2147483647&size=2"})
+    void professionalsEndpointRejectsInvalidPagination(String query) throws Exception {
+        assertThat(getProfessionals("?categoryId=1&" + query).statusCode()).isEqualTo(400);
+    }
+
+    @Test
     void healthReportsUpWithoutInternalDetails() throws Exception {
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/actuator/health")).build(),
