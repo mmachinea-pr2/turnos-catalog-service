@@ -4,6 +4,7 @@ import ar.edu.programacion2.catalog.catalog.application.port.in.ListProfessional
 import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogProfessionalReader;
 import ar.edu.programacion2.catalog.catalog.domain.model.Professional;
 import java.util.List;
+import java.util.Locale;
 
 public class ListProfessionalsByCategoryService implements ListProfessionalsByCategory {
     private final CatalogProfessionalReader reader;
@@ -13,7 +14,8 @@ public class ListProfessionalsByCategoryService implements ListProfessionalsByCa
     }
 
     @Override
-    public List<Professional> list(long categoryId) {
-        return reader.findEnabledByCategory(categoryId);
+    public List<Professional> list(long categoryId, String name) {
+        String normalizedName = name == null ? "" : name.strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+        return reader.findEnabledByCategory(categoryId, normalizedName);
     }
 }

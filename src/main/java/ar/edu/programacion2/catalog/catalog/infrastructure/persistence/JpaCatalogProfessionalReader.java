@@ -16,8 +16,8 @@ public class JpaCatalogProfessionalReader implements CatalogProfessionalReader {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Professional> findEnabledByCategory(long categoryId) {
-        return professionals.findEnabledByCategory(categoryId).stream()
+    public List<Professional> findEnabledByCategory(long categoryId, String normalizedName) {
+        return professionals.findEnabledByCategory(categoryId, normalizedName).stream()
             .map(CatalogPersistenceMapper::toDomain).toList();
     }
 }

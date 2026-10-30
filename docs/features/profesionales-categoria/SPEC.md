@@ -22,7 +22,7 @@ ProfessionalController → ListProfessionalsByCategory → CatalogProfessionalRe
 
 ## Alcance
 
-Este incremento agrega el filtro por categoría. La búsqueda por nombre, paginación, consulta de horarios y disponibilidad se implementarán por separado. La protección JWT sigue pendiente; el endpoint está disponible sin autenticación en el entorno de desarrollo local. No se envía el JWT técnico de cátedra al cliente.
+Este incremento agrega el filtro por categoría. La [búsqueda por nombre](../buscar-profesionales/SPEC.md) amplía este contrato mediante un parámetro opcional. La paginación, consulta de horarios y disponibilidad se implementarán por separado. La protección JWT sigue pendiente; el endpoint está disponible sin autenticación en el entorno de desarrollo local. No se envía el JWT técnico de cátedra al cliente.
 
 ## Probar localmente
 

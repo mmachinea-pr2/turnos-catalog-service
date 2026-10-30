@@ -10,7 +10,8 @@ public interface ProfessionalRepository extends JpaRepository<ProfessionalEntity
         select professional from ProfessionalEntity professional
         join ProfessionalCategoryEntity category on category.id = professional.categoryId
         where category.id = :categoryId and category.enabled = true and professional.enabled = true
+        and locate(:name, lower(concat(professional.firstName, ' ', professional.lastName))) > 0
         order by professional.lastName asc, professional.firstName asc, professional.id asc
         """)
-    List<ProfessionalEntity> findEnabledByCategory(@Param("categoryId") long categoryId);
+    List<ProfessionalEntity> findEnabledByCategory(@Param("categoryId") long categoryId, @Param("name") String normalizedName);
 }
