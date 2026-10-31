@@ -12,7 +12,7 @@ Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivam
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Puede ejecutarse de forma explícita en modo no web; el arranque normal no sincroniza. Están disponibles las categorías habilitadas en `GET /api/catalog/categories` y los profesionales por categoría en `GET /api/catalog/professionals?categoryId=1`. El listado de profesionales admite búsqueda por nombre con `name`, paginación mediante `page` y `size` (20 resultados por defecto, máximo 100) y total filtrado en `X-Total-Count`. La agenda semanal se consulta en `GET /api/catalog/professionals/{professionalId}/schedules`. El estado de la última carga local se consulta en `GET /api/catalog/synchronization/status`. Existe un lector interno opcional de las versiones remotas en Redis; todavía no dispara actualizaciones. El cálculo de disponibilidad, la sincronización automática, usuarios y seguridad JWT todavía están pendientes.
+Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Puede ejecutarse de forma explícita en modo no web; el arranque normal no sincroniza. Están disponibles las categorías habilitadas en `GET /api/catalog/categories` y los profesionales por categoría en `GET /api/catalog/professionals?categoryId=1`. El listado de profesionales admite búsqueda por nombre con `name`, paginación mediante `page` y `size` (20 resultados por defecto, máximo 100) y total filtrado en `X-Total-Count`. La agenda semanal se consulta en `GET /api/catalog/professionals/{professionalId}/schedules`. El estado de la última carga local se consulta en `GET /api/catalog/synchronization/status`. Existe un lector interno opcional de las versiones remotas en Redis y un caso de uso que decide si corresponde obtener un snapshot, aplicar incrementos o si el catálogo está actualizado. También detecta una versión local adelantada. Esta decisión todavía no ejecuta actualizaciones. El cálculo de disponibilidad, la sincronización automática, usuarios y seguridad JWT todavía están pendientes.
 
 ## Alcance previsto
 
@@ -55,6 +55,7 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - [Paginar profesionales](docs/features/paginar-profesionales/SPEC.md)
 - [Consultar estado de sincronización](docs/features/estado-sincronizacion/SPEC.md)
 - [Consultar versiones remotas en Redis](docs/features/versiones-redis/SPEC.md)
+- [Determinar la acción de sincronización](docs/features/decidir-sincronizacion/SPEC.md)
 
 ## Fuentes de requisitos
 
