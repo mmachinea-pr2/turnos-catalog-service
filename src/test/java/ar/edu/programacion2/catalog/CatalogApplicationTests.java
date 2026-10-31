@@ -259,6 +259,52 @@ class CatalogApplicationTests {
         }
     }
 
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> professionalNameSearches() {
+        return java.util.stream.Stream.of(
+            org.junit.jupiter.params.provider.Arguments.of("ana", java.util.List.of(901L)),
+            org.junit.jupiter.params.provider.Arguments.of("GÓMEZ", java.util.List.of(901L)),
+            org.junit.jupiter.params.provider.Arguments.of("  ANA   gómez  ", java.util.List.of(901L)),
+            org.junit.jupiter.params.provider.Arguments.of("ru", java.util.List.of(902L)),
+            org.junit.jupiter.params.provider.Arguments.of("", java.util.List.of(901L, 902L)),
+            org.junit.jupiter.params.provider.Arguments.of("   ", java.util.List.of(901L, 902L)),
+            org.junit.jupiter.params.provider.Arguments.of("inexistente", java.util.List.of()),
+            org.junit.jupiter.params.provider.Arguments.of("%", java.util.List.of()),
+            org.junit.jupiter.params.provider.Arguments.of("_", java.util.List.of()),
+            org.junit.jupiter.params.provider.Arguments.of("' OR 1=1 --", java.util.List.of())
+        );
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.MethodSource("professionalNameSearches")
+    void professionalNameSearchIsLiteralAndKeepsCategoryAndEnabledFilters(String name, java.util.List<Long> expectedIds) throws Exception {
+        try {
+            categories.saveAllAndFlush(java.util.List.of(
+                new ProfessionalCategoryEntity(801L, "Clínica", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(802L, "Otra", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(803L, "Deshabilitada", null, false, CREATED, CREATED)));
+            professionals.saveAllAndFlush(java.util.List.of(
+                new ProfessionalEntity(901L, 801L, "Ana", "Gómez", true, CREATED, CREATED),
+                new ProfessionalEntity(902L, 801L, "Bruno", "Ruiz", true, CREATED, CREATED),
+                new ProfessionalEntity(903L, 801L, "Ana", "Gómez", false, CREATED, CREATED),
+                new ProfessionalEntity(904L, 802L, "Ana", "Gómez", true, CREATED, CREATED),
+                new ProfessionalEntity(905L, 803L, "Ana", "Gómez", true, CREATED, CREATED)));
+            var query = "?categoryId=801&name=" + java.net.URLEncoder.encode(name, java.nio.charset.StandardCharsets.UTF_8);
+            var response = getProfessionals(query);
+            assertThat(response.statusCode()).isEqualTo(200);
+            var rows = tools.jackson.databind.json.JsonMapper.builder().build().readTree(response.body());
+            var ids = new java.util.ArrayList<Long>();
+            for (var row : rows) {
+                ids.add(row.path("id").asLong());
+                assertThat(row.path("categoryId").asLong()).isEqualTo(801L);
+            }
+            assertThat(ids).containsExactlyElementsOf(expectedIds);
+            assertThat(getProfessionals("?categoryId=803&name=Ana").body()).isEqualTo("[]");
+        } finally {
+            professionals.deleteAllByIdInBatch(java.util.List.of(901L, 902L, 903L, 904L, 905L));
+            categories.deleteAllByIdInBatch(java.util.List.of(801L, 802L, 803L));
+        }
+    }
+
     @Test
     void healthReportsUpWithoutInternalDetails() throws Exception {
         try (var client = HttpClient.newHttpClient()) {

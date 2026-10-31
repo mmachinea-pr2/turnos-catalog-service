@@ -17,11 +17,12 @@ public class ProfessionalController {
     }
 
     @GetMapping("/api/catalog/professionals")
-    public List<ProfessionalResponse> list(@RequestParam("categoryId") long categoryId) {
+    public List<ProfessionalResponse> list(@RequestParam("categoryId") long categoryId,
+            @RequestParam(value = "name", required = false) String name) {
         if (categoryId <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoryId must be positive");
         }
-        return listProfessionals.list(categoryId).stream()
+        return listProfessionals.list(categoryId, name).stream()
             .map(professional -> new ProfessionalResponse(professional.id(), professional.categoryId(),
                 professional.firstName(), professional.lastName()))
             .toList();
