@@ -12,7 +12,7 @@ Busca una coincidencia parcial literal sobre el nombre completo (`firstName + es
 
 Si `name` falta, está vacío o solo contiene espacios, devuelve el mismo listado que antes. Si no coincide, devuelve HTTP 200 con `[]`. `categoryId` sigue siendo obligatorio y positivo.
 
-Se mantienen el filtro por categoría, las exclusiones de categorías y profesionales deshabilitados, el orden por apellido/nombre/ID y el DTO existente. No se agrega paginación en este incremento. JWT continúa pendiente.
+Se mantienen el filtro por categoría, las exclusiones de categorías y profesionales deshabilitados, el orden por apellido/nombre/ID y el DTO existente. La [paginación](../paginar-profesionales/SPEC.md) se aplica después de filtrar y mantiene este DTO. JWT continúa pendiente.
 
 ## Implementación
 

@@ -1,6 +1,7 @@
 package ar.edu.programacion2.catalog.catalog.infrastructure.persistence;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,5 +14,5 @@ public interface ProfessionalRepository extends JpaRepository<ProfessionalEntity
         and locate(:name, lower(concat(professional.firstName, ' ', professional.lastName))) > 0
         order by professional.lastName asc, professional.firstName asc, professional.id asc
         """)
-    List<ProfessionalEntity> findEnabledByCategory(@Param("categoryId") long categoryId, @Param("name") String normalizedName);
+    Page<ProfessionalEntity> findEnabledByCategory(@Param("categoryId") long categoryId, @Param("name") String normalizedName, Pageable pageable);
 }
