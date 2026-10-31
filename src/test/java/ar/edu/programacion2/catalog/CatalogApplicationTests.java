@@ -306,6 +306,70 @@ class CatalogApplicationTests {
     }
 
     @Test
+    void scheduleEndpointReturnsOnlyEnabledAgendaInWeekAndTimeOrder() throws Exception {
+        try {
+            categories.saveAllAndFlush(java.util.List.of(
+                new ProfessionalCategoryEntity(1001L, "Clínica", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(1002L, "Deshabilitada", null, false, CREATED, CREATED)));
+            professionals.saveAllAndFlush(java.util.List.of(
+                new ProfessionalEntity(1101L, 1001L, "Ana", "Gómez", true, CREATED, CREATED),
+                new ProfessionalEntity(1102L, 1001L, "No", "Visible", false, CREATED, CREATED),
+                new ProfessionalEntity(1103L, 1002L, "Otra", "Categoría", true, CREATED, CREATED),
+                new ProfessionalEntity(1104L, 1001L, "Sin", "Horarios", true, CREATED, CREATED)));
+            schedules.saveAllAndFlush(java.util.List.of(
+                schedule(1201L, 1101L, DayOfWeek.FRIDAY, 19, 22, true),
+                schedule(1202L, 1101L, DayOfWeek.MONDAY, 14, 17, true),
+                schedule(1203L, 1101L, DayOfWeek.SUNDAY, 9, 12, true),
+                schedule(1208L, 1101L, DayOfWeek.MONDAY, 9, 12, true),
+                schedule(1204L, 1101L, DayOfWeek.MONDAY, 9, 12, true),
+                schedule(1209L, 1101L, DayOfWeek.MONDAY, 9, 11, true),
+                schedule(1205L, 1101L, DayOfWeek.MONDAY, 7, 8, false),
+                schedule(1206L, 1102L, DayOfWeek.MONDAY, 9, 12, true),
+                schedule(1207L, 1103L, DayOfWeek.MONDAY, 9, 12, true)));
+            var response = getSchedules("1101");
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/json");
+            var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+            assertThat(mapper.readTree(response.body())).isEqualTo(mapper.readTree("""
+                [{"id":1209,"professionalId":1101,"dayOfWeek":"MONDAY","startTime":"09:00:00","endTime":"11:00:00","slotDurationMinutes":30},
+                 {"id":1204,"professionalId":1101,"dayOfWeek":"MONDAY","startTime":"09:00:00","endTime":"12:00:00","slotDurationMinutes":30},
+                 {"id":1208,"professionalId":1101,"dayOfWeek":"MONDAY","startTime":"09:00:00","endTime":"12:00:00","slotDurationMinutes":30},
+                 {"id":1202,"professionalId":1101,"dayOfWeek":"MONDAY","startTime":"14:00:00","endTime":"17:00:00","slotDurationMinutes":30},
+                 {"id":1201,"professionalId":1101,"dayOfWeek":"FRIDAY","startTime":"19:00:00","endTime":"22:00:00","slotDurationMinutes":30},
+                 {"id":1203,"professionalId":1101,"dayOfWeek":"SUNDAY","startTime":"09:00:00","endTime":"12:00:00","slotDurationMinutes":30}]
+                """));
+            for (var id : java.util.List.of("1102", "1103", "1104", "1199")) {
+                var empty = getSchedules(id);
+                assertThat(empty.statusCode()).isEqualTo(200);
+                assertThat(empty.body()).isEqualTo("[]");
+            }
+            assertThat(schedules.count()).isEqualTo(9);
+        } finally {
+            schedules.deleteAllByIdInBatch(java.util.List.of(1201L, 1202L, 1203L, 1204L, 1205L, 1206L, 1207L, 1208L, 1209L));
+            professionals.deleteAllByIdInBatch(java.util.List.of(1101L, 1102L, 1103L, 1104L));
+            categories.deleteAllByIdInBatch(java.util.List.of(1001L, 1002L));
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"0", "-1", "abc", "9223372036854775808"})
+    void scheduleEndpointRejectsInvalidProfessional(String id) throws Exception {
+        assertThat(getSchedules(id).statusCode()).isEqualTo(400);
+    }
+
+    private static WeeklyScheduleEntity schedule(long id, long professionalId, DayOfWeek day, int start, int end, boolean enabled) {
+        return new WeeklyScheduleEntity(id, professionalId, day, LocalTime.of(start, 0), LocalTime.of(end, 0),
+            30, enabled, CREATED, CREATED);
+    }
+
+    private HttpResponse<String> getSchedules(String id) throws Exception {
+        try (var client = HttpClient.newHttpClient()) {
+            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/professionals/" + id + "/schedules")).build(),
+                HttpResponse.BodyHandlers.ofString());
+        }
+    }
+
+    @Test
     void healthReportsUpWithoutInternalDetails() throws Exception {
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/actuator/health")).build(),
