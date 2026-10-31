@@ -1,6 +1,7 @@
 package ar.edu.programacion2.catalog.catalog.infrastructure.redis;
 
 import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogVersionSource;
+import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogChangesSource;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -34,6 +35,11 @@ public class CatalogRedisConfiguration {
         client.setOptions(ClientOptions.builder().autoReconnect(false)
             .socketOptions(SocketOptions.builder().connectTimeout(timeout).build()).build());
         return client;
+    }
+
+    @Bean
+    CatalogChangesSource catalogChangesSource(RedisClient catalogRedisClient) {
+        return new RedisCatalogChangesSource(catalogRedisClient);
     }
 
     @Bean

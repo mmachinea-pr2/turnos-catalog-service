@@ -2,6 +2,7 @@ package ar.edu.programacion2.catalog.catalog.infrastructure.redis;
 
 import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogVersionSource;
 import io.lettuce.core.RedisClient;
+import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogChangesSource;
 import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogVersionReadException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,13 +17,13 @@ class CatalogRedisConfigurationTests {
     @Test
     void disabledByDefault() {
         runner.run(context -> assertThat(context).hasNotFailed()
-            .doesNotHaveBean(CatalogVersionSource.class).doesNotHaveBean(RedisClient.class));
+            .doesNotHaveBean(CatalogChangesSource.class).doesNotHaveBean(CatalogVersionSource.class).doesNotHaveBean(RedisClient.class));
     }
 
     @Test
     void enabledCreatesClientWithoutConnecting() {
         configuredRunner().run(context -> assertThat(context).hasNotFailed()
-            .hasSingleBean(CatalogVersionSource.class).hasSingleBean(RedisClient.class));
+            .hasSingleBean(CatalogChangesSource.class).hasSingleBean(CatalogVersionSource.class).hasSingleBean(RedisClient.class));
     }
 
     @Test
