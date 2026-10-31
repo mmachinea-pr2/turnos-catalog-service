@@ -12,7 +12,7 @@ Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivam
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Puede ejecutarse de forma explícita en modo no web; el arranque normal no sincroniza. Están disponibles las categorías habilitadas en `GET /api/catalog/categories` y los profesionales por categoría en `GET /api/catalog/professionals?categoryId=1`. El listado de profesionales admite búsqueda por nombre con `name`, paginación mediante `page` y `size` (20 resultados por defecto, máximo 100) y total filtrado en `X-Total-Count`. La agenda semanal se consulta en `GET /api/catalog/professionals/{professionalId}/schedules`. El estado de la última carga local se consulta en `GET /api/catalog/synchronization/status`. El cálculo de disponibilidad, la sincronización automática, usuarios y seguridad JWT todavía están pendientes.
+Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Puede ejecutarse de forma explícita en modo no web; el arranque normal no sincroniza. Están disponibles las categorías habilitadas en `GET /api/catalog/categories` y los profesionales por categoría en `GET /api/catalog/professionals?categoryId=1`. El listado de profesionales admite búsqueda por nombre con `name`, paginación mediante `page` y `size` (20 resultados por defecto, máximo 100) y total filtrado en `X-Total-Count`. La agenda semanal se consulta en `GET /api/catalog/professionals/{professionalId}/schedules`. El estado de la última carga local se consulta en `GET /api/catalog/synchronization/status`. Existe un lector interno opcional de las versiones remotas en Redis; todavía no dispara actualizaciones. El cálculo de disponibilidad, la sincronización automática, usuarios y seguridad JWT todavía están pendientes.
 
 ## Alcance previsto
 
@@ -25,7 +25,7 @@ Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, en
 
 ## Tecnologías
 
-Java 25, Spring Boot 4.1.1, Maven Wrapper 3.10.0, MySQL 8.4.8 y Flyway.
+Java 25, Spring Boot 4.1.1, Maven Wrapper 3.10.0, MySQL 8.4.8, Flyway y Lettuce para acceder a Redis.
 
 Cada backend será propietario de su base lógica o esquema, usuario y migraciones. Docker Compose deberá levantar el servicio y su infraestructura local. No se utilizará una base embebida como persistencia principal.
 
@@ -54,6 +54,7 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 - [Consultar horarios semanales](docs/features/horarios-profesional/SPEC.md)
 - [Paginar profesionales](docs/features/paginar-profesionales/SPEC.md)
 - [Consultar estado de sincronización](docs/features/estado-sincronizacion/SPEC.md)
+- [Consultar versiones remotas en Redis](docs/features/versiones-redis/SPEC.md)
 
 ## Fuentes de requisitos
 
@@ -103,7 +104,7 @@ sdk env
 ./mvnw -B -ntp clean verify
 ```
 
-Docker debe estar funcionando. Las pruebas crean un MySQL temporal independiente, sin usar `.env` ni la base de desarrollo. Comprueban aplicación de una migración, escritura y lectura de datos y respuesta HTTP de salud sin detalles internos. Los informes quedan en `target/surefire-reports`.
+Docker debe estar funcionando. Las pruebas crean contenedores temporales de MySQL y Redis, sin usar `.env` ni la base de desarrollo. Comprueban aplicación de una migración, escritura y lectura de datos y respuesta HTTP de salud sin detalles internos. Los informes quedan en `target/surefire-reports`.
 
 La migración de producción `V1__create_catalog.sql` crea categorías, profesionales, horarios y estado de sincronización. Reemplaza la antigua tabla exclusiva de pruebas `setup_probe`. Flyway administra el esquema y Hibernate lo valida (`ddl-auto=validate`). Las pruebas verifican también referencias, restricciones de horarios y rollback conjunto de datos y versión. Una vez aplicada una migración de producción, los cambios futuros requieren una nueva versión; no se modifica la anterior.
 
@@ -120,7 +121,7 @@ Ver [especificación de cobertura](docs/features/cobertura/SPEC.md).
 
 ## Configuración local
 
-`.env` contiene claves de desarrollo y está excluido de Git y de la imagen Docker. `.env.example` documenta los campos sin secretos. Las credenciales técnicas de cátedra se configuran únicamente en el entorno local; los archivos versionados contienen campos vacíos. El cliente REST está desactivado por defecto.
+`.env` contiene claves de desarrollo y está excluido de Git y de la imagen Docker. `.env.example` documenta los campos sin secretos. Las credenciales técnicas de cátedra se configuran únicamente en el entorno local; los archivos versionados contienen campos vacíos. Los clientes REST y Redis están desactivados por defecto.
 
 ## Referencia técnica
 
