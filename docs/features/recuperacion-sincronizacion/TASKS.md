@@ -13,6 +13,9 @@ Validación del primer incremento, 02/11/2026: `./mvnw -B -ntp clean verify`, BU
 
 ## Commit 2: ejecución explícita
 
-- [ ] Agregar una ejecución manual del flujo completo.
-- [ ] Informar resultados y errores sin exponer credenciales.
-- [ ] Probar el modo de ejecución y documentar sus comandos.
+- [x] Agregar una ejecución manual del flujo completo.
+- [x] Informar resultados y errores sin exponer credenciales.
+- [x] Probar el modo de ejecución y documentar sus comandos.
+- [x] Verificar la suite completa del segundo incremento.
+
+Validación del segundo incremento, 02/11/2026: `./mvnw -B -ntp clean verify`, BUILD SUCCESS; 289 pruebas sin fallos, errores ni omisiones. Incluye el comando real con Redis y MySQL temporales y un servidor HTTP simulado.
