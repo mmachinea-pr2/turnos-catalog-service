@@ -290,6 +290,45 @@ class CatalogSnapshotPersistenceTests {
         assertThat(states.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(2);
     }
 
+    @Test
+    void coordinatorReadsOutsideTransactionAndAppliesThroughRealStore() {
+        store.apply(snapshot(1, "Original"));
+        var reads = new java.util.concurrent.atomic.AtomicInteger();
+        var changedIds = new ar.edu.programacion2.catalog.catalog.application.model.CatalogChanges(
+            2, List.of(101L), List.of(), List.of());
+        var batch = new CatalogChangedEntities(2, List.of(category("Desde Redis")), List.of(), List.of());
+        var coordinator = new ar.edu.programacion2.catalog.catalog.application.service.SynchronizeCatalogIncrementService(
+            () -> {
+                var state = states.findById(1).orElseThrow();
+                return new ar.edu.programacion2.catalog.catalog.application.model.CatalogSynchronizationStatus(
+                    state.getAppliedVersion(), state.getAppliedAt());
+            },
+            () -> {
+                assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+                reads.incrementAndGet();
+                return new ar.edu.programacion2.catalog.catalog.application.model.RemoteCatalogVersions(2, 1);
+            },
+            version -> {
+                assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+                assertThat(version).isEqualTo(2);
+                return java.util.Optional.of(changedIds);
+            },
+            ids -> {
+                assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+                assertThat(ids).isEqualTo(changedIds);
+                return batch;
+            }, increments);
+        assertThat(coordinator.synchronize()).isEqualTo(
+            ar.edu.programacion2.catalog.catalog.application.model.CatalogIncrementResult.APPLIED);
+        assertThat(reads.get()).isEqualTo(2);
+        assertThat(categories.findById(101L).orElseThrow().getName()).isEqualTo("Desde Redis");
+        assertThat(professionals.count()).isEqualTo(1);
+        assertThat(schedules.count()).isEqualTo(1);
+        assertThat(states.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(2);
+        assertThat(coordinator.synchronize()).isEqualTo(
+            ar.edu.programacion2.catalog.catalog.application.model.CatalogIncrementResult.UP_TO_DATE);
+    }
+
     private static ProfessionalCategory category(String name) {
         return new ProfessionalCategory(101L, name, null, false, SOURCE_TIME, SOURCE_TIME);
     }

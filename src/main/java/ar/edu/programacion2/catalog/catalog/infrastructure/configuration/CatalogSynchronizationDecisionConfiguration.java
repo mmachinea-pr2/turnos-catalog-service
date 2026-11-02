@@ -4,6 +4,11 @@ import ar.edu.programacion2.catalog.catalog.application.port.in.DetermineCatalog
 import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogSynchronizationStatusReader;
 import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogVersionSource;
 import ar.edu.programacion2.catalog.catalog.application.service.DetermineCatalogSynchronizationService;
+import ar.edu.programacion2.catalog.catalog.application.port.in.SynchronizeCatalogIncrement;
+import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogChangesSource;
+import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogEntitiesSource;
+import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogIncrementStore;
+import ar.edu.programacion2.catalog.catalog.application.service.SynchronizeCatalogIncrementService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +16,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "catalog.catedra.redis.enabled", havingValue = "true")
 public class CatalogSynchronizationDecisionConfiguration {
+    @Bean
+    SynchronizeCatalogIncrement synchronizeCatalogIncrement(CatalogSynchronizationStatusReader reader,
+            CatalogVersionSource versions, CatalogChangesSource changes, CatalogEntitiesSource entities,
+            CatalogIncrementStore store) {
+        return new SynchronizeCatalogIncrementService(reader, versions, changes, entities, store);
+    }
+
     @Bean
     DetermineCatalogSynchronization determineCatalogSynchronization(
             CatalogSynchronizationStatusReader reader, CatalogVersionSource source) {
