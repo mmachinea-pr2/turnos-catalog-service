@@ -7,6 +7,15 @@ import ar.edu.programacion2.catalog.catalog.application.model.CatalogChangedEnti
 import ar.edu.programacion2.catalog.catalog.domain.model.*;
 import ar.edu.programacion2.catalog.catalog.infrastructure.persistence.*;
 import ar.edu.programacion2.catalog.catalog.application.service.SynchronizeCatalogSnapshotService;
+import ar.edu.programacion2.catalog.catalog.application.service.SynchronizeCatalogService;
+import ar.edu.programacion2.catalog.catalog.application.service.SynchronizeCatalogIncrementService;
+import ar.edu.programacion2.catalog.catalog.application.model.CatalogSynchronizationStatus;
+import ar.edu.programacion2.catalog.catalog.application.model.RemoteCatalogVersions;
+import ar.edu.programacion2.catalog.catalog.application.model.CatalogSynchronizationResult;
+import ar.edu.programacion2.catalog.catalog.application.port.in.SynchronizeCatalogIncrement;
+import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogChangesSource;
+import ar.edu.programacion2.catalog.catalog.application.port.out.CatalogEntitiesSource;
+import static org.mockito.Mockito.*;
 import ar.edu.programacion2.catalog.catalog.application.port.out.SnapshotFetchException;
 import ar.edu.programacion2.catalog.catalog.infrastructure.rest.RestCatalogSnapshotSource;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -327,6 +336,58 @@ class CatalogSnapshotPersistenceTests {
         assertThat(states.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(2);
         assertThat(coordinator.synchronize()).isEqualTo(
             ar.edu.programacion2.catalog.catalog.application.model.CatalogIncrementResult.UP_TO_DATE);
+    }
+
+    @Test
+    void recoveryDownloadsAndPersistsSnapshotWhenSeveralVersionsArePending() {
+        store.apply(snapshot(1, "Anterior"));
+        var changes = mock(CatalogChangesSource.class);
+        var entities = mock(CatalogEntitiesSource.class);
+        var builder = RestClient.builder().baseUrl("http://catedra.test");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("http://catedra.test/api/synchronization/snapshot"))
+            .andExpect(request -> assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse())
+            .andRespond(withSuccess(new ClassPathResource("catalog/snapshot.json"), MediaType.APPLICATION_JSON));
+        var recovery = new SynchronizeCatalogService(recoveryIncrement(changes, entities),
+            new SynchronizeCatalogSnapshotService(new RestCatalogSnapshotSource(builder.build()), store));
+        assertThat(recovery.synchronize()).isEqualTo(CatalogSynchronizationResult.SNAPSHOT_APPLIED);
+        assertThat(states.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(7);
+        assertThat(categories.findById(101L)).isEmpty();
+        assertThat(categories.findById(1L)).isPresent();
+        assertThat(professionals.findById(15L)).isPresent();
+        assertThat(schedules.findById(21L)).isPresent();
+        assertThat(recovery.synchronize()).isEqualTo(CatalogSynchronizationResult.UP_TO_DATE);
+        verifyNoInteractions(changes, entities);
+        server.verify();
+    }
+
+    @Test
+    void failedRecoveryPreservesLocalCatalogAndVersion() {
+        store.apply(snapshot(1, "Original"));
+        var appliedAt = states.findById(1).orElseThrow().getAppliedAt();
+        var changes = mock(CatalogChangesSource.class);
+        var entities = mock(CatalogEntitiesSource.class);
+        var builder = RestClient.builder().baseUrl("http://catedra.test");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("http://catedra.test/api/synchronization/snapshot"))
+            .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        var recovery = new SynchronizeCatalogService(recoveryIncrement(changes, entities),
+            new SynchronizeCatalogSnapshotService(new RestCatalogSnapshotSource(builder.build()), store));
+        assertThatThrownBy(recovery::synchronize).isInstanceOf(SnapshotFetchException.class);
+        assertThat(categories.findById(101L).orElseThrow().getName()).isEqualTo("Original");
+        assertThat(professionals.findById(201L)).isPresent();
+        assertThat(schedules.findById(301L)).isPresent();
+        assertThat(states.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(1);
+        assertThat(states.findById(1).orElseThrow().getAppliedAt()).isEqualTo(appliedAt);
+        verifyNoInteractions(changes, entities);
+        server.verify();
+    }
+
+    private SynchronizeCatalogIncrement recoveryIncrement(CatalogChangesSource changes, CatalogEntitiesSource entities) {
+        return new SynchronizeCatalogIncrementService(() -> {
+            var state = states.findById(1).orElseThrow();
+            return new CatalogSynchronizationStatus(state.getAppliedVersion(), state.getAppliedAt());
+        }, () -> new RemoteCatalogVersions(7, 1), changes, entities, increments);
     }
 
     private static ProfessionalCategory category(String name) {
