@@ -1,6 +1,6 @@
 # Eventos de catálogo y consumidor Kafka
 
-La funcionalidad se desarrolla en varios commits dentro de una issue. Este primer incremento prepara el contrato, el procesamiento y el registro durable de eventos. Todavía no abre una conexión Kafka ni confirma offsets.
+La funcionalidad se desarrolla en varios commits dentro de una issue. El primer incremento prepara el contrato, el procesamiento y el registro durable de eventos. El segundo conecta el consumidor opcional y controla sus confirmaciones.
 
 ## Contrato de entrada
 
@@ -26,10 +26,46 @@ Guardar datos y registrar el evento son operaciones separadas. Si el proceso cae
 
 El registro no se borra durante snapshots. Aún no hay política de purga: eliminar registros afectaría la deduplicación por eventId.
 
-## Siguiente incremento de la misma issue
+## Consumidor opcional
 
-Configurar el consumidor Kafka opcional para el topic y grupo propios, conectar el decodificador y el manejador, definir confirmaciones y manejo de fallos, y probar con un broker local. No se usarán reportes de otros alumnos como prueba de que el servidor de cátedra funciona o falla.
+`CATEDRA_KAFKA_ENABLED=false` por defecto. Para activarlo, habilitar también REST y Redis y completar las variables propias de integración:
+
+- `CATEDRA_KAFKA_BOOTSTRAP_SERVERS`: brokers de cátedra.
+- `CATEDRA_KAFKA_CATALOG_TOPIC`: topic exacto entregado al grupo.
+- `CATEDRA_KAFKA_CONSUMER_GROUP_ID`: grupo propio; debe conservarse entre reinicios.
+
+Se utiliza un contenedor Spring Kafka con un consumidor y deserializadores String. No se crea ningún topic ni se publica en Kafka. La confirmación automática está desactivada; AckMode.RECORD confirma después de que el manejador devuelva PROCESSED o DUPLICATE. max.poll.records=1 limita cada lectura a un evento y auto.offset.reset=earliest permite recuperar eventos retenidos si el grupo no tiene offset inicial. No reinicia los offsets ya confirmados.
+
+Ante un mensaje inválido, un error de base o red, RETRY_REQUIRED o LOCAL_VERSION_AHEAD, el listener lanza un error seguro y CommonContainerStoppingErrorHandler detiene el consumo. Los mensajes exitosos previos quedan confirmados y el fallido no se descarta. Tras corregir la causa, reiniciar la aplicación con el mismo grupo vuelve a entregar el pendiente. No hay reintentos automáticos, DLT ni omisión de mensajes inválidos: un mensaje que sigue siendo inválido volverá a detener el consumidor y requiere revisión del contrato con su emisor.
+
+El indicador de salud Kafka solo se registra cuando el consumidor está habilitado. Informa DOWN si está detenido o sin particiones asignadas. Comprueba ese estado local, no la actualidad de los datos ni una conexión instantánea con el broker. El health público sigue ocultando detalles internos.
+
+## Ejecución
+
+Con ZeroTier conectado y `.env` completo, desde la terminal del repositorio:
+
+```bash
+sdk env
+set -a
+. ./.env
+set +a
+unset MYSQL_ROOT_PASSWORD
+docker compose up -d --wait mysql
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--catalog.catedra.enabled=true --catalog.catedra.redis.enabled=true --catalog.catedra.kafka.enabled=true"
+```
+
+Es una ejecución continua, compatible con las consultas HTTP. No debe combinarse con ninguno de los dos comandos de sincronización manual; una configuración incompatible falla antes del consumo. Los comandos manuales documentados desactivan Kafka explícitamente.
+
+Para ejecutar el backend con Compose, configurar en el entorno local `CATEDRA_REST_ENABLED=true`, `CATEDRA_REDIS_ENABLED=true` y `CATEDRA_KAFKA_ENABLED=true`, además de los datos de integración, y usar `docker compose up --build -d`. Compose transmite esas variables al contenedor sin incorporarlas a la imagen. Usar solo una modalidad de ejecución del backend a la vez. El acceso desde Docker a la red ZeroTier también debe estar disponible.
+
+## Referencias técnicas
+
+- [Spring Kafka: detención y confirmaciones ante errores](https://docs.spring.io/spring-kafka/reference/kafka/annotation-error-handling.html#container-stopping-error-handlers).
+- [Testcontainers: broker Kafka temporal](https://java.testcontainers.org/modules/kafka/).
 
 ## Pruebas
 
 Validación del mensaje y clave, campos adicionales, duplicados, eventos antiguos, eventos adelantados respecto de los datos y fallos sin registro. MySQL temporal: migración, persistencia, identidad sensible a mayúsculas, colisiones de versión, concurrencia y procesamiento con guardado real fuera de la transacción de red.
+
+
+Pruebas del segundo incremento con un broker Kafka temporal: confirmación del evento exitoso, ausencia de confirmación del fallido, reentrega tras reiniciar el contenedor consumidor, continuación con el mismo grupo tras recrear el contexto y confirmación de duplicados. Mensajes inválidos detienen el consumidor sin llegar al manejador. Esta prueba usa un manejador controlado; la persistencia e idempotencia reales se verifican por separado con MySQL. No se comprobó la publicación ni el consumo en el servidor docente.
