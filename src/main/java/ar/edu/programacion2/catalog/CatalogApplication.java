@@ -7,7 +7,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class CatalogApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(CatalogApplication.class, args);
+		var context = SpringApplication.run(CatalogApplication.class, args);
+        if (context.getEnvironment().getProperty("catalog.synchronization.full-run-on-startup", Boolean.class, false)) {
+            context.close();
+        }
 	}
 
 }
