@@ -24,7 +24,7 @@ set -a
 set +a
 unset MYSQL_ROOT_PASSWORD
 docker compose up -d --wait mysql
-./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.main.web-application-type=none --catalog.catedra.enabled=true --catalog.synchronization.run-on-startup=true --catalog.catedra.read-timeout=30s"
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.main.web-application-type=none --catalog.catedra.enabled=true --catalog.synchronization.periodic.enabled=false --catalog.synchronization.run-on-startup=true --catalog.catedra.read-timeout=30s"
 ```
 
 El comando modifica la base MySQL de desarrollo indicada por el entorno: reemplaza la copia local si recibe una versión posterior, o aplica la primera carga si no hay versión. No altera la base de la cátedra. Ejecutar una sola instancia de esta carga manual y no guardar la opción de ejecución en la configuración habitual de IntelliJ.
