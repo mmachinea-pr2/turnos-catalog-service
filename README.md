@@ -133,3 +133,7 @@ Ver [especificación de cobertura](docs/features/cobertura/SPEC.md).
 ## Referencia técnica
 
 La base se generó mediante [Spring Initializr](https://start.spring.io/).
+
+## Recuperación periódica opcional
+
+El catálogo puede comprobar versiones sin esperar notificaciones mediante `CATALOG_PERIODIC_ENABLED=true`, con REST y Redis habilitados. El intervalo predeterminado es 60 segundos desde el fin de cada comprobación. Configuración, límites y ejecución: [recuperación periódica](docs/features/recuperacion-periodica/SPEC.md).
