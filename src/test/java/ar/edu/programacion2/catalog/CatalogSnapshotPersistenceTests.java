@@ -55,6 +55,7 @@ class CatalogSnapshotPersistenceTests {
         properties.add("spring.datasource.password", MYSQL::getPassword);
     }
 
+    @Autowired ar.edu.programacion2.catalog.catalog.application.port.out.ProcessedCatalogEventStore processedEvents;
     @Autowired CatalogSnapshotStore store;
     @Autowired CatalogIncrementStore increments;
     @Autowired ProfessionalCategoryRepository categories;
@@ -66,6 +67,7 @@ class CatalogSnapshotPersistenceTests {
 
     @BeforeEach
     void resetDatabase() {
+        jdbc.update("DELETE FROM processed_catalog_event");
         schedules.deleteAllInBatch();
         professionals.deleteAllInBatch();
         categories.deleteAllInBatch();
@@ -388,6 +390,89 @@ class CatalogSnapshotPersistenceTests {
             var state = states.findById(1).orElseThrow();
             return new CatalogSynchronizationStatus(state.getAppliedVersion(), state.getAppliedAt());
         }, () -> new RemoteCatalogVersions(7, 1), changes, entities, increments);
+    }
+
+    @Test
+    void processedEventIsDurableIdempotentAndCaseSensitive() {
+        store.apply(snapshot(7, "Original"));
+        var event = catalogEvent("Event-7", 7);
+        assertThat(processedEvents.isProcessed(event)).isFalse();
+        processedEvents.markProcessed(event);
+        assertThat(processedEvents.isProcessed(event)).isTrue();
+        var processedAt = jdbc.queryForObject("SELECT processed_at FROM processed_catalog_event", java.sql.Timestamp.class);
+        processedEvents.markProcessed(event);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM processed_catalog_event", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT processed_at FROM processed_catalog_event", java.sql.Timestamp.class)).isEqualTo(processedAt);
+        assertThat(processedEvents.isProcessed(catalogEvent("event-7", 7))).isFalse();
+        processedEvents.markProcessed(catalogEvent("event-7", 7));
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM processed_catalog_event", Integer.class)).isEqualTo(2);
+    }
+
+    @Test
+    void eventCannotBeRecordedBeforeLocalVersionCoversIt() {
+        var event = catalogEvent("event-7", 7);
+        assertThatThrownBy(() -> processedEvents.markProcessed(event)).isInstanceOf(DataAccessException.class);
+        store.apply(snapshot(6, "Original"));
+        assertThatThrownBy(() -> processedEvents.markProcessed(event)).isInstanceOf(DataAccessException.class);
+        assertThat(processedEvents.isProcessed(event)).isFalse();
+        assertThat(states.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(6);
+    }
+
+    @Test
+    void reusedEventIdWithDifferentVersionIsRejected() {
+        store.apply(snapshot(8, "Original"));
+        processedEvents.markProcessed(catalogEvent("event-7", 7));
+        var conflict = catalogEvent("event-7", 8);
+        assertThatThrownBy(() -> processedEvents.isProcessed(conflict))
+            .isInstanceOf(ar.edu.programacion2.catalog.catalog.application.port.out.CatalogEventConflictException.class);
+        assertThatThrownBy(() -> processedEvents.markProcessed(conflict))
+            .isInstanceOf(ar.edu.programacion2.catalog.catalog.application.port.out.CatalogEventConflictException.class);
+        assertThat(jdbc.queryForObject("SELECT new_version FROM processed_catalog_event", Long.class)).isEqualTo(7);
+    }
+
+    @Test
+    void concurrentEventRecordingCreatesOneRow() throws Exception {
+        store.apply(snapshot(7, "Original"));
+        var event = catalogEvent("event-7", 7);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            java.util.concurrent.Callable<Void> task = () -> {
+                start.await();
+                processedEvents.markProcessed(event);
+                return null;
+            };
+            var first = executor.submit(task);
+            var second = executor.submit(task);
+            start.countDown();
+            first.get(15, java.util.concurrent.TimeUnit.SECONDS);
+            second.get(15, java.util.concurrent.TimeUnit.SECONDS);
+        }
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM processed_catalog_event", Integer.class)).isEqualTo(1);
+    }
+
+    @Test
+    void eventHandlerSynchronizesOutsideTransactionThenPersistsDeduplication() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var handler = new ar.edu.programacion2.catalog.catalog.application.service.HandleCatalogUpdatedService(
+            processedEvents, () -> {
+                var state = states.findById(1).orElseThrow();
+                return new CatalogSynchronizationStatus(state.getAppliedVersion(), state.getAppliedAt());
+            }, () -> {
+                assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+                calls.incrementAndGet();
+                store.apply(snapshot(7, "Notificada"));
+                return CatalogSynchronizationResult.SNAPSHOT_APPLIED;
+            });
+        var event = catalogEvent("event-7", 7);
+        assertThat(handler.handle(event)).isEqualTo(ar.edu.programacion2.catalog.catalog.application.model.CatalogEventResult.PROCESSED);
+        assertThat(handler.handle(event)).isEqualTo(ar.edu.programacion2.catalog.catalog.application.model.CatalogEventResult.DUPLICATE);
+        assertThat(calls.get()).isEqualTo(1);
+        assertThat(processedEvents.isProcessed(event)).isTrue();
+        assertThat(categories.findById(101L).orElseThrow().getName()).isEqualTo("Notificada");
+    }
+
+    private ar.edu.programacion2.catalog.catalog.application.model.CatalogUpdatedEvent catalogEvent(String id, long version) {
+        return new ar.edu.programacion2.catalog.catalog.application.model.CatalogUpdatedEvent(id, version, SOURCE_TIME, "MANUAL");
     }
 
     private static ProfessionalCategory category(String name) {

@@ -38,7 +38,7 @@ unset MYSQL_ROOT_PASSWORD
 
 Si 8080 está ocupado, agregar `--server.port=18081` dentro de los argumentos. Para Compose, configurar las tres variables de activación en `.env` y ejecutar `docker compose up --build -d`. Compose transmite las variables sin incorporarlas a la imagen. No ejecutar varias instancias de prueba contra la misma base sin necesidad.
 
-La recuperación periódica no sustituye al consumidor Kafka: cuando se integren ambos PR, podrán ejecutarse juntos. No reinicia un consumidor detenido, no confirma offsets y no registra eventos como procesados. El indicador de Kafka seguirá reflejando su estado propio. Una recuperación por versiones no prueba por sí sola la recepción de una notificación.
+La recuperación periódica no sustituye al consumidor Kafka: ambos pueden ejecutarse juntos. No reinicia un consumidor detenido, no confirma offsets y no registra eventos como procesados. El indicador de Kafka seguirá reflejando su estado propio. Una recuperación por versiones no prueba por sí sola la recepción de una notificación.
 
 ## Validación
 

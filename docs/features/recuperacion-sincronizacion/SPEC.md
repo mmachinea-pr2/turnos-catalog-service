@@ -35,7 +35,7 @@ set -a
 set +a
 unset MYSQL_ROOT_PASSWORD
 docker compose up -d --wait mysql
-./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.main.web-application-type=none --catalog.catedra.enabled=true --catalog.catedra.redis.enabled=true --catalog.synchronization.run-on-startup=false --catalog.synchronization.periodic.enabled=false --catalog.synchronization.full-run-on-startup=true"
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.main.web-application-type=none --catalog.catedra.kafka.enabled=false --catalog.catedra.enabled=true --catalog.catedra.redis.enabled=true --catalog.synchronization.run-on-startup=false --catalog.synchronization.periodic.enabled=false --catalog.synchronization.full-run-on-startup=true"
 ```
 
 Las credenciales no deben escribirse como argumentos ni guardarse en Git. Spring no lee `.env` automáticamente: el bloque anterior exporta las variables para el proceso.
