@@ -48,7 +48,7 @@ class CatalogApplicationTests {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM catalog_sync_state WHERE id = 1 AND applied_version IS NULL AND applied_at IS NULL", Integer.class))
             .isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class))
-            .isEqualTo(1);
+            .isEqualTo(2);
     }
 
     @Autowired ProfessionalCategoryRepository categories;
