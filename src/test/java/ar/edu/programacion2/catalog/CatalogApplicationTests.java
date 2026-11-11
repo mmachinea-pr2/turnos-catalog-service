@@ -35,6 +35,7 @@ class CatalogApplicationTests {
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry properties) {
+        properties.add("catalog.security.secret", () -> java.util.Base64.getEncoder().encodeToString(new byte[32]));
         properties.add("spring.datasource.url", MYSQL::getJdbcUrl);
         properties.add("spring.datasource.username", MYSQL::getUsername);
         properties.add("spring.datasource.password", MYSQL::getPassword);
@@ -193,7 +194,7 @@ class CatalogApplicationTests {
 
     private HttpResponse<String> getCategories() throws Exception {
         try (var client = HttpClient.newHttpClient()) {
-            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/categories")).build(),
+            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/categories")).header("Authorization","Bearer " + userToken()).build(),
                 HttpResponse.BodyHandlers.ofString());
         }
     }
@@ -254,7 +255,7 @@ class CatalogApplicationTests {
 
     private HttpResponse<String> getProfessionals(String query) throws Exception {
         try (var client = HttpClient.newHttpClient()) {
-            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/professionals" + query)).build(),
+            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/professionals" + query)).header("Authorization","Bearer " + userToken()).build(),
                 HttpResponse.BodyHandlers.ofString());
         }
     }
@@ -364,7 +365,7 @@ class CatalogApplicationTests {
 
     private HttpResponse<String> getSchedules(String id) throws Exception {
         try (var client = HttpClient.newHttpClient()) {
-            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/professionals/" + id + "/schedules")).build(),
+            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/professionals/" + id + "/schedules")).header("Authorization","Bearer " + userToken()).build(),
                 HttpResponse.BodyHandlers.ofString());
         }
     }
@@ -471,7 +472,7 @@ class CatalogApplicationTests {
 
     private HttpResponse<String> getSynchronizationStatus() throws Exception {
         try (var client = HttpClient.newHttpClient()) {
-            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/synchronization/status")).build(),
+            return client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + "/api/catalog/synchronization/status")).header("Authorization","Bearer " + userToken()).build(),
                 HttpResponse.BodyHandlers.ofString());
         }
     }
@@ -484,5 +485,17 @@ class CatalogApplicationTests {
             assertThat(response.statusCode()).isEqualTo(200);
             assertThat(response.body()).isEqualTo("{\"status\":\"UP\"}");
         }
+    }
+
+    private String userToken() {
+        var encoder=org.springframework.security.oauth2.jwt.NimbusJwtEncoder.withSecretKey(
+            new javax.crypto.spec.SecretKeySpec(new byte[32],"HmacSHA256"))
+            .algorithm(org.springframework.security.oauth2.jose.jws.MacAlgorithm.HS256).build();
+        var now=Instant.now();
+        var claims=org.springframework.security.oauth2.jwt.JwtClaimsSet.builder()
+            .subject("11111111-1111-1111-1111-111111111111").issuer("turnos-booking")
+            .audience(java.util.List.of("turnos-backends")).issuedAt(now).expiresAt(now.plusSeconds(600))
+            .claim("auth","ROLE_USER").build();
+        return encoder.encode(org.springframework.security.oauth2.jwt.JwtEncoderParameters.from(claims)).getTokenValue();
     }
 }

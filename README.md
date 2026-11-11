@@ -12,7 +12,7 @@ Proyecto integrador individual de Programación II, 2026. Se utilizan exclusivam
 
 ## Estado actual
 
-Base técnica implementada: aplicación Spring Boot, conexión MySQL, Flyway, endpoint de salud, modelo persistente del catálogo, modelos de dominio en Java puro y pruebas unitarias y de integración. Se valida la consistencia de un snapshot en memoria y se puede persistir mediante un puerto interno que reemplaza datos y versión en una transacción. Un caso de uso interno conecta el cliente REST con el guardado: obtiene y valida el snapshot antes de persistirlo. Puede ejecutarse de forma explícita en modo no web; el arranque normal no sincroniza. Están disponibles las categorías habilitadas en `GET /api/catalog/categories` y los profesionales por categoría en `GET /api/catalog/professionals?categoryId=1`. El listado de profesionales admite búsqueda por nombre con `name`, paginación mediante `page` y `size` (20 resultados por defecto, máximo 100) y total filtrado en `X-Total-Count`. La agenda semanal se consulta en `GET /api/catalog/professionals/{professionalId}/schedules`. El estado de la última carga local se consulta en `GET /api/catalog/synchronization/status`. Existe un lector interno opcional de las versiones remotas en Redis y un caso de uso que decide si corresponde obtener un snapshot, aplicar incrementos o si el catálogo está actualizado. También detecta una versión local adelantada. Esta decisión todavía no ejecuta actualizaciones. Un lector interno permite obtener desde Redis los IDs afectados por una versión, distinguiendo una versión ausente de una sin cambios; otro lector obtiene las entidades vigentes correspondientes desde sus Hashes, conservando las bajas lógicas. Un puerto interno puede aplicar un lote de la siguiente versión en una transacción, conservando las entidades no modificadas. Un coordinador interno conecta las lecturas con el guardado cuando falta una sola versión y comprueba los metadatos remotos antes y después de leer. Si faltan varias versiones o cambios, indica necesidad de snapshot; si los metadatos cambian, indica reintento. Un caso de uso general realiza la recuperación por snapshot cuando se solicita y propaga los otros resultados. El flujo completo puede ejecutarse manualmente en modo no web; realiza un solo intento y cierra la aplicación al terminar. La ejecución programada sigue pendiente. Está preparado el procesamiento de notificaciones CatalogUpdated con registro persistente de eventId; el consumidor Kafka opcional dispara la sincronización y confirma los eventos procesados. Ante un fallo detiene el consumo sin confirmar el pendiente; el reinicio con el mismo grupo permite retomarlo. El cálculo de disponibilidad, la sincronización automática, usuarios y seguridad JWT todavía están pendientes.
+Catálogo persistido en MySQL con migraciones Flyway, consultas de categorías, profesionales y agendas semanales. La sincronización combina snapshots REST, incrementos Redis, eventos Kafka con inbox persistente y recuperación periódica opcional. Las consultas y el estado de sincronización están protegidos con JWT emitidos por booking; salud sigue pública. Registro de usuarios y cálculo de disponibilidad pertenecen a booking. Queda pendiente validar ambos servicios desplegados en conjunto contra cátedra.
 
 ## Alcance previsto
 
@@ -72,13 +72,13 @@ Cada backend será propietario de su base lógica o esquema, usuario y migracion
 
 1. Abrir esta carpeta con **File → Open** e importar el proyecto Maven (`pom.xml`).
 2. En **File → Project Structure → Project SDK**, seleccionar Java 25. En esta computadora está instalado en `~/.sdkman/candidates/java/25.0.4.1+1-tem`. Usar también ese JDK en Maven (importación y ejecución).
-3. Si `.env` no existe, copiar `.env.example` a `.env` y completar `DB_PASSWORD` y `MYSQL_ROOT_PASSWORD` con claves locales diferentes. En la computadora actual ya se creó el archivo local.
+3. Si `.env` no existe, copiar `.env.example` a `.env` y completar `DB_PASSWORD` y `MYSQL_ROOT_PASSWORD` con claves locales diferentes. Completar `CATALOG_JWT_SECRET` con el valor de `BOOKING_JWT_SECRET` de booking; no sobrescribir un `.env` existente.
 4. En la terminal del proyecto, ejecutar `docker compose up -d --wait mysql`.
 5. Abrir `src/main/java/ar/edu/programacion2/catalog/CatalogApplication.java` y crear una configuración de ejecución para esa clase.
-6. En **Edit Configurations → Environment variables**, cargar `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` y `APP_PORT` desde el `.env` local. No pasar `MYSQL_ROOT_PASSWORD` a Java. Spring Boot no lee `.env` automáticamente.
+6. En **Edit Configurations → Environment variables**, cargar `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `APP_PORT` y `CATALOG_JWT_SECRET` desde el `.env` local. Si se personalizaron, cargar también `CATALOG_JWT_ISSUER` y `CATALOG_JWT_AUDIENCE`. No pasar `MYSQL_ROOT_PASSWORD` a Java. Spring Boot no lee `.env` automáticamente.
 7. Ejecutar la clase y abrir `http://localhost:8080/actuator/health`. Se espera `{"status":"UP"}`.
 
-El puerto MySQL predeterminado es 3308; el HTTP es 8080. Ambos se publican únicamente en la computadora local. El health comprueba disponibilidad técnica y conexión a la base; todavía no hay sincronización con la cátedra.
+El puerto MySQL predeterminado es 3308; el HTTP es 8080. Ambos se publican únicamente en la computadora local. El health comprueba disponibilidad técnica y conexión a la base. La sincronización con cátedra se configura por separado.
 
 ## Ejecutar desde terminal
 
@@ -137,3 +137,11 @@ La base se generó mediante [Spring Initializr](https://start.spring.io/).
 ## Recuperación periódica opcional
 
 El catálogo puede comprobar versiones sin esperar notificaciones mediante `CATALOG_PERIODIC_ENABLED=true`, con REST y Redis habilitados. El intervalo predeterminado es 60 segundos desde el fin de cada comprobación. Configuración, límites y ejecución: [recuperación periódica](docs/features/recuperacion-periodica/SPEC.md).
+
+## Autenticación de las consultas
+
+Las consultas `/api/catalog/**` requieren el JWT de usuario emitido por booking
+con `ROLE_USER`. Configurar `CATALOG_JWT_SECRET` con el mismo valor local de
+`BOOKING_JWT_SECRET`; no usar el JWT técnico de cátedra. Sin una clave válida,
+el servidor web no arranca. GET `/actuator/health` continúa público.
+Ver [configuración, permisos y pruebas de JWT](docs/features/seguridad-jwt/SPEC.md).

@@ -37,3 +37,11 @@ Importar el proyecto Maven en IntelliJ, seleccionar Java 25 y cargar las variabl
 - `.env` y `target/` están excluidos de Git.
 
 Los contenedores de desarrollo quedaron activos. Antes de ejecutar Java desde IntelliJ, detener únicamente el backend con `docker compose stop catalog`; la base MySQL puede continuar activa. No se realizaron commits, push ni PR.
+
+## JWT compartido con booking
+
+Antes de iniciar el servidor web, configurar `CATALOG_JWT_SECRET` con el valor
+local de `BOOKING_JWT_SECRET`. Añadirlo al `.env` para Compose y a las variables
+de ejecución de IntelliJ. Emisor y audiencia deben coincidir en ambos servicios.
+No publicar la clave ni usar el token técnico como clave. Las consultas requieren
+Bearer JWT; la salud sigue pública. Detalles en [seguridad JWT](features/seguridad-jwt/SPEC.md).
