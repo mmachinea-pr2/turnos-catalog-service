@@ -14,8 +14,8 @@ public class ListProfessionalsByCategoryService implements ListProfessionalsByCa
     }
 
     @Override
-    public ProfessionalPage list(long categoryId, String name, PageQuery page) {
+    public ProfessionalPage list(long categoryId, String name, java.time.DayOfWeek dayOfWeek, PageQuery page) {
         String normalizedName = name == null ? "" : name.strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
-        return reader.findEnabledByCategory(categoryId, normalizedName, page);
+        return reader.findEnabledByCategory(categoryId, normalizedName, dayOfWeek, page);
     }
 }
