@@ -498,4 +498,55 @@ class CatalogApplicationTests {
             .claim("auth","ROLE_USER").build();
         return encoder.encode(org.springframework.security.oauth2.jwt.JwtEncoderParameters.from(claims)).getTokenValue();
     }
+
+    @Test
+    void dayFilterUsesEnabledSchedulesWithoutDuplicatingProfessionalsOrTotals() throws Exception {
+        var professionalIds = java.util.List.of(5101L, 5102L, 5103L, 5104L, 5105L, 5106L);
+        var scheduleIds = java.util.List.of(5201L, 5202L, 5203L, 5204L, 5205L, 5206L);
+        try {
+            categories.saveAllAndFlush(java.util.List.of(
+                new ProfessionalCategoryEntity(5001L, "Filtro", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(5002L, "Oculta", null, false, CREATED, CREATED)));
+            professionals.saveAllAndFlush(java.util.List.of(
+                new ProfessionalEntity(5101L, 5001L, "Ana", "A", true, CREATED, CREATED),
+                new ProfessionalEntity(5102L, 5001L, "Ana", "B", true, CREATED, CREATED),
+                new ProfessionalEntity(5103L, 5001L, "Ana", "C", true, CREATED, CREATED),
+                new ProfessionalEntity(5104L, 5001L, "Ana", "D", true, CREATED, CREATED),
+                new ProfessionalEntity(5105L, 5001L, "Ana", "E", false, CREATED, CREATED),
+                new ProfessionalEntity(5106L, 5002L, "Ana", "F", true, CREATED, CREATED)));
+            schedules.saveAllAndFlush(java.util.List.of(
+                schedule(5201L, 5101L, DayOfWeek.FRIDAY, 9, 12, true),
+                schedule(5202L, 5101L, DayOfWeek.FRIDAY, 14, 17, true),
+                schedule(5203L, 5102L, DayOfWeek.FRIDAY, 9, 12, true),
+                schedule(5204L, 5103L, DayOfWeek.FRIDAY, 9, 12, false),
+                schedule(5205L, 5105L, DayOfWeek.FRIDAY, 9, 12, true),
+                schedule(5206L, 5106L, DayOfWeek.FRIDAY, 9, 12, true)));
+            var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+            for (int page = 0; page < 2; page++) {
+                var response = getProfessionals("?categoryId=5001&name=ana&dayOfWeek=FRIDAY&size=1&page=" + page);
+                assertThat(response.statusCode()).isEqualTo(200);
+                assertThat(response.headers().firstValue("X-Total-Count")).contains("2");
+                var rows = mapper.readTree(response.body());
+                assertThat(rows.size()).isEqualTo(1);
+                assertThat(rows.get(0).path("id").asLong()).isEqualTo(5101L + page);
+            }
+            var beyond = getProfessionals("?categoryId=5001&dayOfWeek=FRIDAY&size=1&page=2");
+            assertThat(beyond.body()).isEqualTo("[]");
+            assertThat(beyond.headers().firstValue("X-Total-Count")).contains("2");
+            assertThat(getProfessionals("?categoryId=5001&dayOfWeek=MONDAY").body()).isEqualTo("[]");
+            assertThat(getProfessionals("?categoryId=5001&dayOfWeek=FRIDAY&name=Bruno").body()).isEqualTo("[]");
+            assertThat(getProfessionals("?categoryId=5002&dayOfWeek=FRIDAY").body()).isEqualTo("[]");
+            assertThat(getProfessionals("?categoryId=5001").headers().firstValue("X-Total-Count")).contains("4");
+        } finally {
+            schedules.deleteAllByIdInBatch(scheduleIds);
+            professionals.deleteAllByIdInBatch(professionalIds);
+            categories.deleteAllByIdInBatch(java.util.List.of(5001L, 5002L));
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"VIERNES", "friday", "8"})
+    void professionalsRejectInvalidDayOfWeek(String day) throws Exception {
+        assertThat(getProfessionals("?categoryId=1&dayOfWeek=" + day).statusCode()).isEqualTo(400);
+    }
 }

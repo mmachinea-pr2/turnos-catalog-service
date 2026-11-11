@@ -145,3 +145,10 @@ con `ROLE_USER`. Configurar `CATALOG_JWT_SECRET` con el mismo valor local de
 `BOOKING_JWT_SECRET`; no usar el JWT técnico de cátedra. Sin una clave válida,
 el servidor web no arranca. GET `/actuator/health` continúa público.
 Ver [configuración, permisos y pruebas de JWT](docs/features/seguridad-jwt/SPEC.md).
+
+### Búsqueda por día de atención
+
+La consulta de profesionales admite `dayOfWeek=FRIDAY` (opcional), combinado
+con `categoryId`, `name`, `page` y `size`. Filtra agendas semanales habilitadas
+sobre la copia local; no garantiza cupos libres. Ver el
+[contrato y las pruebas del filtro](docs/features/disponibilidad-agenda/SPEC.md).
