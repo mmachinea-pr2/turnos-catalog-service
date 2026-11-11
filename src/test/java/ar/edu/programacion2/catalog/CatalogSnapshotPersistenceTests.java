@@ -50,6 +50,7 @@ class CatalogSnapshotPersistenceTests {
 
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry properties) {
+        properties.add("catalog.security.secret", () -> java.util.Base64.getEncoder().encodeToString(new byte[32]));
         properties.add("spring.datasource.url", MYSQL::getJdbcUrl);
         properties.add("spring.datasource.username", MYSQL::getUsername);
         properties.add("spring.datasource.password", MYSQL::getPassword);
