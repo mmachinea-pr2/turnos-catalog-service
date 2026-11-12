@@ -2,4 +2,5 @@ package ar.edu.programacion2.catalog.catalog.infrastructure.web;
 
 import java.time.Instant;
 
-public record CatalogSynchronizationStatusResponse(boolean initialized, Long appliedVersion, Instant appliedAt) {}
+public record CatalogSynchronizationStatusResponse(boolean initialized, Long appliedVersion, Instant appliedAt,
+        ar.edu.programacion2.catalog.catalog.application.model.CatalogSynchronizationAttempt lastAttempt) {}

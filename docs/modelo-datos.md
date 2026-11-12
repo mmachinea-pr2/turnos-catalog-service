@@ -1,6 +1,6 @@
 # Modelo de datos del catálogo
 
-Este documento define el diseño de persistencia que se implementará en el servicio de catálogo. El servicio es propietario exclusivo de estas tablas. Los identificadores de categorías, profesionales y horarios se conservan tal como llegan desde la cátedra; no se generan IDs locales para esas entidades.
+Este documento describe la persistencia implementada en el servicio de catálogo. El servicio es propietario exclusivo de estas tablas. Los identificadores de categorías, profesionales y horarios se conservan tal como llegan desde la cátedra; no se generan IDs locales para esas entidades.
 
 | Tabla | Contenido | Relación |
 | --- | --- | --- |
@@ -78,3 +78,11 @@ La primera migración de producción será `V1__create_catalog.sql`. Reemplazar�
 ## Alcance del diseño
 
 Este documento no acredita una sincronización implementada. La carga de snapshots, las búsquedas HTTP y JWT se desarrollarán en etapas posteriores. La documentación de esta etapa puede revisarse antes de incorporar código, migraciones y pruebas.
+
+## Seguimiento de sincronización
+
+`processed_catalog_event` (V2) deduplica notificaciones por identificador de
+evento. `catalog_sync_attempt` (V3) conserva una sola fila con el identificador
+interno del intento, inicio, fin, resultado y código de error seguro. No comparte
+transacción ni significado con la versión aplicada de `catalog_sync_state`.
+Ver [contrato y límites del último intento](features/ultimo-intento-sincronizacion/SPEC.md).

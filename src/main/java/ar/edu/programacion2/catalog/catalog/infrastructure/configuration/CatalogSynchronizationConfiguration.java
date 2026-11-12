@@ -12,7 +12,10 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(name = "catalog.catedra.enabled", havingValue = "true")
 public class CatalogSynchronizationConfiguration {
     @Bean
-    SynchronizeCatalogSnapshot synchronizeCatalogSnapshot(CatalogSnapshotSource source, CatalogSnapshotStore store) {
-        return new SynchronizeCatalogSnapshotService(source, store);
+    SynchronizeCatalogSnapshot synchronizeCatalogSnapshot(CatalogSnapshotSource source, CatalogSnapshotStore store,
+            ar.edu.programacion2.catalog.catalog.application.service.TrackCatalogSynchronization tracker) {
+        var delegate = new SynchronizeCatalogSnapshotService(source, store);
+        return () -> tracker.execute(delegate::synchronize,
+            applied -> applied ? "SNAPSHOT_APPLIED" : "SNAPSHOT_ALREADY_COVERED");
     }
 }
