@@ -13,6 +13,10 @@ import static org.mockito.Mockito.*;
 
 class CatalogSynchronizationConfigurationTests {
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
+        .withBean(ar.edu.programacion2.catalog.catalog.application.service.TrackCatalogSynchronization.class,
+            () -> new ar.edu.programacion2.catalog.catalog.application.service.TrackCatalogSynchronization(
+                mock(ar.edu.programacion2.catalog.catalog.application.port.out.CatalogSynchronizationAttemptStore.class),
+                java.time.Clock.systemUTC()))
         .withUserConfiguration(CatalogSynchronizationConfiguration.class);
 
     @Test
@@ -38,6 +42,8 @@ class CatalogSynchronizationConfigurationTests {
                 order.verify(source).fetch();
                 order.verify(store).apply(snapshot);
                 order.verifyNoMoreInteractions();
+                when(store.apply(snapshot)).thenReturn(false);
+                assertThat(context.getBean(SynchronizeCatalogSnapshot.class).synchronize()).isFalse();
             });
     }
 }

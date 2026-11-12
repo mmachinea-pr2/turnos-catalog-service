@@ -153,3 +153,10 @@ La consulta de profesionales admite `dayOfWeek=FRIDAY` (opcional), combinado
 con `categoryId`, `name`, `page` y `size`. Filtra agendas semanales habilitadas
 sobre la copia local; no garantiza cupos libres. Ver el
 [contrato y las pruebas del filtro](docs/features/disponibilidad-agenda/SPEC.md).
+
+### Resultado del último intento de sincronización
+
+`GET /api/catalog/synchronization/status` incluye `lastAttempt` con inicio,
+fin, resultado y código de error seguro. La versión aplicada se conserva ante
+fallos. Flyway V3 agrega su persistencia sin borrar el catálogo. Ver
+[estados, recuperación y límites](docs/features/ultimo-intento-sincronizacion/SPEC.md).

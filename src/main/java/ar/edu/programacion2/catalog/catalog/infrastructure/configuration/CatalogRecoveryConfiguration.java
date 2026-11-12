@@ -22,7 +22,9 @@ public class CatalogRecoveryConfiguration {
     }
 
     @Bean
-    SynchronizeCatalog synchronizeCatalog(SynchronizeCatalogIncrement increment, SynchronizeCatalogSnapshot snapshot) {
-        return new SynchronizeCatalogService(increment, snapshot);
+    SynchronizeCatalog synchronizeCatalog(SynchronizeCatalogIncrement increment, SynchronizeCatalogSnapshot snapshot,
+            ar.edu.programacion2.catalog.catalog.application.service.TrackCatalogSynchronization tracker) {
+        var delegate = new SynchronizeCatalogService(increment, snapshot);
+        return () -> tracker.execute(delegate::synchronize, Enum::name);
     }
 }

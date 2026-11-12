@@ -49,7 +49,7 @@ class CatalogApplicationTests {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM catalog_sync_state WHERE id = 1 AND applied_version IS NULL AND applied_at IS NULL", Integer.class))
             .isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success = 1", Integer.class))
-            .isEqualTo(2);
+            .isEqualTo(3);
     }
 
     @Autowired ProfessionalCategoryRepository categories;
@@ -429,7 +429,7 @@ class CatalogApplicationTests {
         assertThat(response.statusCode()).isEqualTo(200);
         var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
         assertThat(mapper.readTree(response.body())).isEqualTo(mapper.readTree("""
-            {"initialized":false,"appliedVersion":null,"appliedAt":null}
+            {"initialized":false,"appliedVersion":null,"appliedAt":null,"lastAttempt":{"startedAt":null,"completedAt":null,"result":"NEVER","errorCode":null}}
             """));
         assertThat(categories.count()).isZero();
         assertThat(syncStates.findById(1).orElseThrow().getAppliedVersion()).isNull();
@@ -449,7 +449,7 @@ class CatalogApplicationTests {
             assertThat(response.statusCode()).isEqualTo(200);
             assertThat(response.headers().firstValue("Content-Type").orElseThrow()).startsWith("application/json");
             var body = tools.jackson.databind.json.JsonMapper.builder().build().readTree(response.body());
-            assertThat(body.size()).isEqualTo(3);
+            assertThat(body.size()).isEqualTo(4);
             assertThat(body.path("initialized").asBoolean()).isTrue();
             assertThat(body.path("appliedVersion").asLong()).isEqualTo(version);
             assertThat(Instant.parse(body.path("appliedAt").asText())).isEqualTo(CREATED);
@@ -548,5 +548,53 @@ class CatalogApplicationTests {
     @org.junit.jupiter.params.provider.ValueSource(strings = {"VIERNES", "friday", "8"})
     void professionalsRejectInvalidDayOfWeek(String day) throws Exception {
         assertThat(getProfessionals("?categoryId=1&dayOfWeek=" + day).statusCode()).isEqualTo(400);
+    }
+
+    @Autowired ar.edu.programacion2.catalog.catalog.application.port.out.CatalogSynchronizationAttemptStore attemptStore;
+
+    @Test
+    void attemptsPersistFailureAndRecoveryWithoutChangingAppliedVersionAndRejectStaleCompletion() throws Exception {
+        var first = java.util.UUID.randomUUID();
+        var second = java.util.UUID.randomUUID();
+        try {
+            jdbc.update("UPDATE catalog_sync_state SET applied_version=7, applied_at=? WHERE id=1", java.sql.Timestamp.from(CREATED));
+            var transaction = new TransactionTemplate(transactionManager);
+            transaction.executeWithoutResult(status -> {
+                attemptStore.start(first, CREATED);
+                attemptStore.complete(first, CREATED.plusSeconds(1), "FAILED", "SYNCHRONIZATION_FAILED");
+                status.setRollbackOnly();
+            });
+            var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+            var body = mapper.readTree(getSynchronizationStatus().body());
+            assertThat(body.path("appliedVersion").asLong()).isEqualTo(7);
+            assertThat(body.path("lastAttempt").path("result").asText()).isEqualTo("FAILED");
+            assertThat(body.path("lastAttempt").path("errorCode").asText()).isEqualTo("SYNCHRONIZATION_FAILED");
+            assertThat(Instant.parse(body.path("lastAttempt").path("completedAt").asText())).isEqualTo(CREATED.plusSeconds(1));
+            attemptStore.start(second, CREATED.plusSeconds(2));
+            assertThat(attemptStore.read().result()).isEqualTo("RUNNING");
+            assertThat(attemptStore.read().completedAt()).isNull();
+            assertThat(attemptStore.read().errorCode()).isNull();
+            attemptStore.complete(second, CREATED.plusSeconds(3), "UP_TO_DATE", null);
+            attemptStore.complete(first, CREATED.plusSeconds(4), "FAILED", "SYNCHRONIZATION_FAILED");
+            var freshReader = new ar.edu.programacion2.catalog.catalog.infrastructure.persistence.JdbcCatalogSynchronizationAttemptStore(jdbc);
+            assertThat(freshReader.read().result()).isEqualTo("UP_TO_DATE");
+            assertThat(freshReader.read().errorCode()).isNull();
+            assertThat(freshReader.read().startedAt()).isEqualTo(CREATED.plusSeconds(2));
+            assertThat(syncStates.findById(1).orElseThrow().getAppliedVersion()).isEqualTo(7);
+        } finally {
+            jdbc.update("UPDATE catalog_sync_attempt SET attempt_id=NULL, started_at=NULL, completed_at=NULL, result='NEVER', error_code=NULL WHERE id=1");
+            jdbc.update("UPDATE catalog_sync_state SET applied_version=NULL, applied_at=NULL WHERE id=1");
+        }
+    }
+
+    @Test
+    void attemptRecordingRejectsMissingState() {
+        jdbc.update("DELETE FROM catalog_sync_attempt WHERE id=1");
+        try {
+            assertThatThrownBy(() -> attemptStore.start(java.util.UUID.randomUUID(), CREATED))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class);
+        } finally {
+            jdbc.update("INSERT INTO catalog_sync_attempt(id,result) VALUES (1,'NEVER')");
+        }
     }
 }
