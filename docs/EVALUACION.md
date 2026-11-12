@@ -3,7 +3,7 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación II (UM): RepoSense + análisis de calidad de **7 dimensiones**. **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas) + build: es una criba para orientar la revisión, **no una nota**. La **documentación** del repositorio no se evalúa.
-> Generado: 2026-11-11.
+> Generado: 2026-11-12.
 
 ## 1. Veredicto
 
@@ -12,12 +12,12 @@
 | Índice de calidad | **75/100** |
 | Tipo de repositorio | `backend` |
 | Build (`mvnw verify` / `gradlew check`) | OK |
-| Código (LOC) | 5,219 |
+| Código (LOC) | 5,274 |
 | Archivos de código | 130 |
 | Clases | 134 |
 | Código dentro de clases (%POO) | 81% |
 | Funciones fuera de clases | 0 |
-| Duplicación (puerta) | 2.2% |
+| Duplicación (puerta) | 2.1% |
 | Duplicación lógica | 2.2% |
 | Duplicación de boilerplate | 1.0% |
 | Cobertura | 100% |
@@ -143,8 +143,8 @@ El análisis encontró las siguientes señales (archivo, sin número de línea a
 - clase 'CatalogQueryConfiguration' instancia 4 concretos (CBO=12) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/configuration/CatalogQueryConfiguration.java`
 - clase 'CatalogRecoveryConfiguration' muy acoplada (CBO=8) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/configuration/CatalogRecoveryConfiguration.java`
 - clase 'CatalogSynchronizationDecisionConfiguration' muy acoplada (CBO=9) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/configuration/CatalogSynchronizationDecisionConfiguration.java`
-- clase 'ProfessionalController' muy acoplada (CBO=11) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/web/ProfessionalController.java`
-- clase 'ProfessionalController' instancia 4 concretos (CBO=11) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/web/ProfessionalController.java`
+- clase 'ProfessionalController' muy acoplada (CBO=12) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/web/ProfessionalController.java`
+- clase 'ProfessionalController' instancia 4 concretos (CBO=12) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/web/ProfessionalController.java`
 - clase 'SynchronizeCatalogIncrementService' muy acoplada (CBO=22) — `src/main/java/ar/edu/programacion2/catalog/catalog/application/service/SynchronizeCatalogIncrementService.java`
 - clase 'SynchronizeCatalogIncrementService' instancia 3 concretos (CBO=22) — `src/main/java/ar/edu/programacion2/catalog/catalog/application/service/SynchronizeCatalogIncrementService.java`
 - clase 'SynchronizeCatalogService' muy acoplada (CBO=13) — `src/main/java/ar/edu/programacion2/catalog/catalog/application/service/SynchronizeCatalogService.java`
@@ -159,8 +159,8 @@ El análisis encontró las siguientes señales (archivo, sin número de línea a
 - clase 'ManualCatalogSynchronizationIntegrationTests' instancia 6 concretos (CBO=25) — `src/test/java/ar/edu/programacion2/catalog/ManualCatalogSynchronizationIntegrationTests.java`
 - clase 'CatalogSnapshotPersistenceTests' muy acoplada (CBO=88) — `src/test/java/ar/edu/programacion2/catalog/CatalogSnapshotPersistenceTests.java`
 - clase 'CatalogSnapshotPersistenceTests' instancia 42 concretos (CBO=88) — `src/test/java/ar/edu/programacion2/catalog/CatalogSnapshotPersistenceTests.java`
-- clase 'CatalogApplicationTests' muy acoplada (CBO=98) — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
-- clase 'CatalogApplicationTests' instancia 50 concretos (CBO=98) — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
+- clase 'CatalogApplicationTests' muy acoplada (CBO=101) — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
+- clase 'CatalogApplicationTests' instancia 58 concretos (CBO=101) — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
 - clase 'JwtSettingsTests' muy acoplada (CBO=8) — `src/test/java/ar/edu/programacion2/catalog/security/JwtSettingsTests.java`
 - clase 'JwtSettingsTests' instancia 7 concretos (CBO=8) — `src/test/java/ar/edu/programacion2/catalog/security/JwtSettingsTests.java`
 - clase 'CatalogSecurityTests' muy acoplada (CBO=28) — `src/test/java/ar/edu/programacion2/catalog/security/CatalogSecurityTests.java`
@@ -209,7 +209,7 @@ El análisis encontró las siguientes señales (archivo, sin número de línea a
 **OCP/type-switch** (1)
 - clase 'SecurityConfiguration' con 1 type-checks — `src/main/java/ar/edu/programacion2/catalog/security/SecurityConfiguration.java`
 
-**SRP/responsabilidad** (47)
+**SRP/responsabilidad** (49)
 - clase 'RedisCatalogEntityParser' grande (LOC=62, métodos=13, campos=0) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/redis/RedisCatalogEntityParser.java`
 - método 'ManualFullCatalogSynchronization.run' con complejidad 9 — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/startup/ManualFullCatalogSynchronization.java`
 - clase 'CatalogSyncStateEntity' con baja cohesión (20%) — `src/main/java/ar/edu/programacion2/catalog/catalog/infrastructure/persistence/CatalogSyncStateEntity.java`
@@ -233,7 +233,7 @@ El análisis encontró las siguientes señales (archivo, sin número de línea a
 - método 'ManualCatalogSynchronizationIntegrationTests.explicitCommandLoadsCatalogOnceAndKeepsItWhenServerFails' de 47 líneas — `src/test/java/ar/edu/programacion2/catalog/ManualCatalogSynchronizationIntegrationTests.java`
 - clase 'CatalogSnapshotPersistenceTests' grande (LOC=412, métodos=31, campos=2) — `src/test/java/ar/edu/programacion2/catalog/CatalogSnapshotPersistenceTests.java`
 - método 'CatalogSnapshotPersistenceTests.coordinatorReadsOutsideTransactionAndAppliesThroughRealStore' de 37 líneas — `src/test/java/ar/edu/programacion2/catalog/CatalogSnapshotPersistenceTests.java`
-- clase 'CatalogApplicationTests' grande (LOC=439, métodos=39, campos=2) — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
+- clase 'CatalogApplicationTests' grande (LOC=488, métodos=43, campos=2) — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
 - método 'CatalogApplicationTests.professionalsEndpointFiltersCategoryAndLogicalDeletionsWithStableOrder' de 31 líneas — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
 - método 'CatalogApplicationTests.scheduleEndpointReturnsOnlyEnabledAgendaInWeekAndTimeOrder' de 44 líneas — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
 - método 'CatalogApplicationTests.schedule' con 6 parámetros — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
@@ -241,6 +241,8 @@ El análisis encontró las siguientes señales (archivo, sin número de línea a
 - método 'CatalogApplicationTests.professionalsPaginationPreservesFiltersCountsAndStableOrder' de 43 líneas — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
 - método 'CatalogApplicationTests.professionalsPaginationPreservesFiltersCountsAndStableOrder' con complejidad 6 — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
 - método 'CatalogApplicationTests.ProfessionalCategoryEntity' con 5 parámetros — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
+- método 'CatalogApplicationTests.dayFilterUsesEnabledSchedulesWithoutDuplicatingProfessionalsOrTotals' de 43 líneas — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
+- método 'CatalogApplicationTests.schedule' con 6 parámetros — `src/test/java/ar/edu/programacion2/catalog/CatalogApplicationTests.java`
 - clase 'CatalogSecurityTests' grande (LOC=78, métodos=15, campos=0) — `src/test/java/ar/edu/programacion2/catalog/security/CatalogSecurityTests.java`
 - método 'CatalogSecurityTests.rejectsInvalidClaims' con complejidad 11 — `src/test/java/ar/edu/programacion2/catalog/security/CatalogSecurityTests.java`
 - clase 'RedisCatalogEntitiesSourceTests' grande (LOC=151, métodos=22, campos=2) — `src/test/java/ar/edu/programacion2/catalog/catalog/infrastructure/redis/RedisCatalogEntitiesSourceTests.java`
@@ -259,7 +261,7 @@ El análisis encontró las siguientes señales (archivo, sin número de línea a
 - método 'CatalogSnapshotTests.rejectsMissingCollectionsAndNullMembers' con complejidad 7 — `src/test/java/ar/edu/programacion2/catalog/catalog/domain/model/CatalogSnapshotTests.java`
 
 **duplicación** (6)
-- duplicación lógica: 2.2% · boilerplate: 1.0%
+- duplicación lógica: 2.1% · boilerplate: 1.0%
 - bloque de 8 líneas repetido 4 veces en src/test/java/ar/edu/programacion2/catalog/catalog/application/service/DetermineCatalogSynchronizationServiceTests.java:15, src/test/java/ar/edu/programacion2/catalog/catalog/application/service/DetermineCatalogSynchronizationServiceTests.java:16, src/test/java/ar/edu/programacion2/catalog/catalog/application/service/DetermineCatalogSynchronizationServiceTests.java:17 — `src/test/java/ar/edu/programacion2/catalog/catalog/application/service/DetermineCatalogSynchronizationServiceTests.java`
 - bloque de 8 líneas repetido 4 veces en src/test/java/ar/edu/programacion2/catalog/ManualFullCatalogSynchronizationIntegrationTests.java:110, src/test/java/ar/edu/programacion2/catalog/catalog/infrastructure/redis/RedisCatalogEntitiesSourceTests.java:184, src/test/java/ar/edu/programacion2/catalog/catalog/infrastructure/redis/RedisCatalogChangesSourceTests.java:137 — `src/test/java/ar/edu/programacion2/catalog/ManualFullCatalogSynchronizationIntegrationTests.java`
 - bloque de 8 líneas repetido 4 veces en src/test/java/ar/edu/programacion2/catalog/ManualFullCatalogSynchronizationIntegrationTests.java:108, src/test/java/ar/edu/programacion2/catalog/catalog/infrastructure/redis/RedisCatalogEntitiesSourceTests.java:182, src/test/java/ar/edu/programacion2/catalog/catalog/infrastructure/redis/RedisCatalogChangesSourceTests.java:135 — `src/test/java/ar/edu/programacion2/catalog/ManualFullCatalogSynchronizationIntegrationTests.java`
