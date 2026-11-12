@@ -549,4 +549,58 @@ class CatalogApplicationTests {
     void professionalsRejectInvalidDayOfWeek(String day) throws Exception {
         assertThat(getProfessionals("?categoryId=1&dayOfWeek=" + day).statusCode()).isEqualTo(400);
     }
+
+    @Test
+    void disabledFilterCombinesCriteriaAndPaginationWithoutExposingBookableSchedules() throws Exception {
+        var professionalIds = java.util.List.of(6101L, 6102L, 6103L, 6104L, 6105L);
+        var scheduleIds = java.util.List.of(6201L, 6202L, 6203L, 6204L);
+        try {
+            categories.saveAllAndFlush(java.util.List.of(
+                new ProfessionalCategoryEntity(6001L, "Estado", null, true, CREATED, CREATED),
+                new ProfessionalCategoryEntity(6002L, "Oculta", null, false, CREATED, CREATED)));
+            professionals.saveAllAndFlush(java.util.List.of(
+                new ProfessionalEntity(6101L, 6001L, "Ana", "A", false, CREATED, CREATED),
+                new ProfessionalEntity(6102L, 6001L, "Ana", "B", false, CREATED, CREATED),
+                new ProfessionalEntity(6103L, 6001L, "Bruno", "C", false, CREATED, CREATED),
+                new ProfessionalEntity(6104L, 6001L, "Ana", "D", true, CREATED, CREATED),
+                new ProfessionalEntity(6105L, 6002L, "Ana", "E", false, CREATED, CREATED)));
+            schedules.saveAllAndFlush(java.util.List.of(
+                schedule(6201L, 6101L, DayOfWeek.FRIDAY, 9, 12, true),
+                schedule(6202L, 6101L, DayOfWeek.FRIDAY, 14, 17, true),
+                schedule(6203L, 6102L, DayOfWeek.FRIDAY, 9, 12, true),
+                schedule(6204L, 6103L, DayOfWeek.FRIDAY, 9, 12, false)));
+            var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+            for (int page = 0; page < 2; page++) {
+                var response = getProfessionals("?categoryId=6001&enabled=false&name=ana&dayOfWeek=FRIDAY&size=1&page=" + page);
+                assertThat(response.statusCode()).isEqualTo(200);
+                assertThat(response.headers().firstValue("X-Total-Count")).contains("2");
+                var rows = mapper.readTree(response.body());
+                assertThat(rows.size()).isEqualTo(1);
+                assertThat(rows.get(0).path("id").asLong()).isEqualTo(6101L + page);
+            }
+            var beyond = getProfessionals("?categoryId=6001&enabled=false&name=ana&dayOfWeek=FRIDAY&size=1&page=2");
+            assertThat(beyond.body()).isEqualTo("[]");
+            assertThat(beyond.headers().firstValue("X-Total-Count")).contains("2");
+            var defaults = getProfessionals("?categoryId=6001");
+            var explicit = getProfessionals("?categoryId=6001&enabled=true");
+            assertThat(defaults.body()).isEqualTo(explicit.body());
+            assertThat(mapper.readTree(explicit.body()).get(0).path("id").asLong()).isEqualTo(6104L);
+            assertThat(explicit.headers().firstValue("X-Total-Count")).contains("1");
+            assertThat(getProfessionals("?categoryId=6001&enabled=false").headers().firstValue("X-Total-Count")).contains("3");
+            assertThat(getProfessionals("?categoryId=6001&enabled=false&name=Bruno&dayOfWeek=FRIDAY").body()).isEqualTo("[]");
+            assertThat(getProfessionals("?categoryId=6001&enabled=false&dayOfWeek=MONDAY").body()).isEqualTo("[]");
+            assertThat(getProfessionals("?categoryId=6002&enabled=false").body()).isEqualTo("[]");
+            assertThat(getSchedules("6101").body()).isEqualTo("[]");
+        } finally {
+            schedules.deleteAllByIdInBatch(scheduleIds);
+            professionals.deleteAllByIdInBatch(professionalIds);
+            categories.deleteAllByIdInBatch(java.util.List.of(6001L, 6002L));
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"invalid", "2", "null"})
+    void professionalsRejectInvalidEnabledFilter(String enabled) throws Exception {
+        assertThat(getProfessionals("?categoryId=1&enabled=" + enabled).statusCode()).isEqualTo(400);
+    }
 }

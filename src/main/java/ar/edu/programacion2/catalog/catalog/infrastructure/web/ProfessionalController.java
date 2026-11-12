@@ -22,6 +22,7 @@ public class ProfessionalController {
     public ResponseEntity<List<ProfessionalResponse>> list(@RequestParam("categoryId") long categoryId,
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "dayOfWeek", required = false) java.time.DayOfWeek dayOfWeek,
+            @RequestParam(value = "enabled", defaultValue = "true") boolean enabled,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
         if (categoryId <= 0) {
@@ -33,7 +34,7 @@ public class ProfessionalController {
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid page or size");
         }
-        var result = listProfessionals.list(categoryId, name, dayOfWeek, pagination);
+        var result = listProfessionals.list(categoryId, name, dayOfWeek, enabled, pagination);
         var body = result.content().stream()
             .map(professional -> new ProfessionalResponse(professional.id(), professional.categoryId(),
                 professional.firstName(), professional.lastName()))

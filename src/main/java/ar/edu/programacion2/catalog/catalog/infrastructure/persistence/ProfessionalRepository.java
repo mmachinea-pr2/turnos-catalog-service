@@ -10,7 +10,7 @@ public interface ProfessionalRepository extends JpaRepository<ProfessionalEntity
     @Query("""
         select professional from ProfessionalEntity professional
         join ProfessionalCategoryEntity category on category.id = professional.categoryId
-        where category.id = :categoryId and category.enabled = true and professional.enabled = true
+        where category.id = :categoryId and category.enabled = true and professional.enabled = :enabled
         and locate(:name, lower(concat(professional.firstName, ' ', professional.lastName))) > 0
         and (:dayOfWeek is null or exists (
             select schedule.id from WeeklyScheduleEntity schedule
@@ -19,5 +19,5 @@ public interface ProfessionalRepository extends JpaRepository<ProfessionalEntity
         ))
         order by professional.lastName asc, professional.firstName asc, professional.id asc
         """)
-    Page<ProfessionalEntity> findEnabledByCategory(@Param("categoryId") long categoryId, @Param("name") String normalizedName, @Param("dayOfWeek") java.time.DayOfWeek dayOfWeek, Pageable pageable);
+    Page<ProfessionalEntity> findByCategoryAndEnabled(@Param("categoryId") long categoryId, @Param("name") String normalizedName, @Param("dayOfWeek") java.time.DayOfWeek dayOfWeek, @Param("enabled") boolean enabled, Pageable pageable);
 }
