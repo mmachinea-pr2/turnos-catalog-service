@@ -15,6 +15,10 @@ import static org.mockito.Mockito.*;
 
 class CatalogRecoveryConfigurationTests {
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
+        .withBean(ar.edu.programacion2.catalog.catalog.application.service.TrackCatalogSynchronization.class,
+            () -> new ar.edu.programacion2.catalog.catalog.application.service.TrackCatalogSynchronization(
+                mock(ar.edu.programacion2.catalog.catalog.application.port.out.CatalogSynchronizationAttemptStore.class),
+                java.time.Clock.systemUTC()))
         .withUserConfiguration(CatalogRecoveryConfiguration.class);
 
     @Test
@@ -43,6 +47,9 @@ class CatalogRecoveryConfigurationTests {
             .run(context -> {
                 assertThat(context).hasNotFailed().hasSingleBean(SynchronizeCatalog.class).hasSingleBean(HandleCatalogUpdated.class);
                 verifyNoInteractions(increment, snapshot, events, status);
+                when(increment.synchronize()).thenReturn(ar.edu.programacion2.catalog.catalog.application.model.CatalogIncrementResult.UP_TO_DATE);
+                assertThat(context.getBean(SynchronizeCatalog.class).synchronize())
+                    .isEqualTo(ar.edu.programacion2.catalog.catalog.application.model.CatalogSynchronizationResult.UP_TO_DATE);
             });
     }
 }
