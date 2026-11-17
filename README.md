@@ -153,3 +153,10 @@ La consulta de profesionales admite `dayOfWeek=FRIDAY` (opcional), combinado
 con `categoryId`, `name`, `page` y `size`. Filtra agendas semanales habilitadas
 sobre la copia local; no garantiza cupos libres. Ver el
 [contrato y las pruebas del filtro](docs/features/disponibilidad-agenda/SPEC.md).
+
+### Búsqueda por estado habilitado
+
+El endpoint de profesionales acepta `enabled=true` (predeterminado) o
+`enabled=false`, combinable con los demás filtros. Las categorías deshabilitadas
+siguen excluidas. Consultar un profesional deshabilitado no habilita su agenda
+para reservas. Ver [contrato y pruebas](docs/features/estado-habilitado/SPEC.md).

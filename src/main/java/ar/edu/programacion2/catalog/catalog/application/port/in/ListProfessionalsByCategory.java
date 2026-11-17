@@ -4,5 +4,5 @@ import ar.edu.programacion2.catalog.catalog.application.model.PageQuery;
 import ar.edu.programacion2.catalog.catalog.application.model.ProfessionalPage;
 
 public interface ListProfessionalsByCategory {
-    ProfessionalPage list(long categoryId, String name, java.time.DayOfWeek dayOfWeek, PageQuery page);
+    ProfessionalPage list(long categoryId, String name, java.time.DayOfWeek dayOfWeek, boolean enabled, PageQuery page);
 }
