@@ -17,8 +17,8 @@ public class JpaCatalogProfessionalReader implements CatalogProfessionalReader {
 
     @Override
     @Transactional(readOnly = true)
-    public ProfessionalPage findEnabledByCategory(long categoryId, String normalizedName, java.time.DayOfWeek dayOfWeek, PageQuery page) {
-        var result = professionals.findEnabledByCategory(categoryId, normalizedName, dayOfWeek,
+    public ProfessionalPage findByCategoryAndEnabled(long categoryId, String normalizedName, java.time.DayOfWeek dayOfWeek, boolean enabled, PageQuery page) {
+        var result = professionals.findByCategoryAndEnabled(categoryId, normalizedName, dayOfWeek, enabled,
             PageRequest.of(page.page(), page.size()));
         return new ProfessionalPage(result.getContent().stream()
             .map(CatalogPersistenceMapper::toDomain).toList(), result.getTotalElements());
